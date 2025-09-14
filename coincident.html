@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<title>coincident</title>
+<style>
+  svg {
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+    cursor: crosshair;
+  }
+  circle.sender {
+    stroke: black;
+    stroke-width: 1;
+  }
+  circle.wave {
+    fill: none;
+    stroke-width: 2;
+  }
+  circle.x-point {
+    fill: white;
+    stroke: black;
+    stroke-width: 2;
+    r: 6;
+  }
+  circle.current-x-point {
+    fill: black;
+    r: 6;
+  }
+  #info {
+    font-family: monospace;
+    white-space: pre;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<svg id="svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- Sender -->
+  <circle id="R" class="sender" cx="100" cy="100" r="6" fill="red" />
+  <circle id="G" class="sender" cx="300" cy="100" r="6" fill="green" />
+  <circle id="B" class="sender" cx="100" cy="300" r="6" fill="blue" />
+
+  <!-- Wellen -->
+  <circle id="waveR" class="wave" stroke="red" cx="100" cy="100" r="0" />
+  <circle id="waveG" class="wave" stroke="green" cx="300" cy="100" r="0" />
+  <circle id="waveB" class="wave" stroke="blue" cx="100" cy="300" r="0" />
+
+  <!-- Aktueller Treffpunkt -->
+  <circle id="currentXPoint" class="current-x-point" r="6" />
+</svg>
+
+<div id="info"></div>
+
+<script>
+(() => {
+  /*
+    Anleitung zur Umsetzung der SVG-Animation mit synchronen Signalwellen:
+
+    1. Ziel:
+       - Visualisierung von drei Sendern (Rot, Grün, Blau), die Signale aussenden.
+       - Ein dynamischer Treffpunkt X, an dem sich alle Signale synchron treffen.
+       - Treffpunkte lassen sich per Klick ins SVG setzen und akkumulieren (bleiben sichtbar).
+       - Signale starten so, dass sie „so bald wie möglich“ gleichzeitig am Treffpunkt eintreffen.
+
+    2. Grundprinzip:
+       - Jeder Sender befindet sich an einer festen Position.
+       - Der Treffpunkt X wird vom Nutzer per Klick im SVG bestimmt.
+       - Die Entfernung d_i zwischen Sender i und Treffpunkt X wird berechnet.
+       - Die Signale bewegen sich mit konstanter Geschwindigkeit v.
+       - Die frühestmögliche Treffzeit t_x ergibt sich als maximale Entfernung durch v:
+         t_x = max(d_R, d_G, d_B) / v
+       - Die Startzeit jedes Senders wird so gesetzt, dass das Signal
+         genau bei t_x den Treffpunkt erreicht:
+         t_i = t_x - d_i / v
+
+    3. Animation:
+       - Die Signalwellen werden als Kreise gezeichnet, die mit Radius r_i(t) = v * (t - t_i) wachsen.
+       - Die Animation läuft mit requestAnimationFrame und zeichnet jede Frame neue Radien.
+       - Die Animation stoppt, wenn alle drei Wellen radien ungefähr der jeweiligen Distanz zum Treffpunkt entsprechen (mit Toleranz).
+
+    4. Interaktivität:
+       - Beim Klick ins SVG wird der neue Treffpunkt gesetzt und als schwarzer Kreis markiert.
+       - Alle bisherigen Treffpunkte bleiben als weiße Kreise mit schwarzem Rand erhalten.
+       - Die Animation startet mit den neuen Startzeiten.
+
+    5. Koordinatenumrechnung:
+       - Mausposition wird mit createSVGPoint und getScreenCTM().inverse() exakt in SVG-Koordinaten transformiert,
+         um Skalierung, Zoom und Position des SVG im Browser zu berücksichtigen.
+
+    6. Visualisierung:
+       - Sender sind farbige Kreise (rot, grün, blau).
+       - Signalwellen sind Kreise mit farbigem Rand, deren Radius animiert wächst.
+       - Treffpunkte sind Kreise:
+         * aktueller Treffpunkt: schwarz gefüllt
+         * vorherige Treffpunkte: weiß gefüllt mit schwarzer Kontur
+
+    So ist sichergestellt, dass die Signale genau und synchron bei jedem gesetzten Punkt ankommen
+    und dass sich die Treffpunkte visuell akkumulieren, um eine History der Klicks zu zeigen.
+  */
+
+  const svg = document.getElementById('svg');
+  const waveR = document.getElementById('waveR');
+  const waveG = document.getElementById('waveG');
+  const waveB = document.getElementById('waveB');
+  const currentXPoint = document.getElementById('currentXPoint');
+  const info = document.getElementById('info');
+
+  // Sender Positionen
+  const posR = { x: 100, y: 100 };
+  const posG = { x: 300, y: 100 };
+  const posB = { x: 100, y: 300 };
+
+  // Signalgeschwindigkeit in px/s
+  const v = 100;
+
+  // Max Radius und Zyklusdauer (nicht mehr relevant hier)
+  const maxRadius = 400;
+
+  let startTime = null;
+  let animationFrameId = null;
+
+  // Aktueller Treffpunkt (initial)
+  let posX = { x: 200, y: 160 };
+
+  // Array für alle akkumulierten Treffpunkte
+  const allXPoints = [];
+
+  // Entfernung berechnen
+  function dist(a, b) {
+    return Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2);
+  }
+
+  // Radius der Welle zum Zeitpunkt t (Sekunden), Startzeit ist t_start
+  function radius(t, t_start) {
+    let dt = t - t_start;
+    if (dt < 0) return 0;
+    return dt * v; // Radius wächst mit Geschwindigkeit * Zeit
+  }
+
+  // Prüfen ob alle Wellen nahe genug an den jeweiligen Distanzen zum Treffpunkt sind
+  function checkArrival(t) {
+    const tolerance = 3; // px
+
+    const rR = radius(t, tR);
+    const rG = radius(t, tG);
+    const rB = radius(t, tB);
+
+    const hitR = Math.abs(rR - dR) < tolerance;
+    const hitG = Math.abs(rG - dG) < tolerance;
+    const hitB = Math.abs(rB - dB) < tolerance;
+
+    return hitR && hitG && hitB;
+  }
+
+  function updateInfo(t) {
+    info.textContent =
+      `Aktuelle Zeit: ${t.toFixed(2)} s\n` +
+      `Signalgeschwindigkeit: ${v} px/s\n` +
+      `Berechnete Treffzeit t_x: ${t_x.toFixed(3)} s\n` +
+      `Startzeiten (s): R=${tR.toFixed(3)}, G=${tG.toFixed(3)}, B=${tB.toFixed(3)}\n` +
+      `Entfernungen (px): dR=${dR.toFixed(2)}, dG=${dG.toFixed(2)}, dB=${dB.toFixed(2)}\n` +
+      `Treffpunkt (x,y): (${posX.x.toFixed(1)}, ${posX.y.toFixed(1)})\n` +
+      `Treffpunkt erreicht: ${checkArrival(t) ? "JA" : "NEIN"}`;
+  }
+
+  function animate(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const elapsed = (timestamp - startTime) / 1000;
+
+    waveR.setAttribute('r', radius(elapsed, tR));
+    waveG.setAttribute('r', radius(elapsed, tG));
+    waveB.setAttribute('r', radius(elapsed, tB));
+
+    updateInfo(elapsed);
+
+    if (checkArrival(elapsed)) {
+      cancelAnimationFrame(animationFrameId);
+      return;
+    }
+
+    animationFrameId = requestAnimationFrame(animate);
+  }
+
+  function addAccumulatedXPoint(x, y) {
+    const pt = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    pt.setAttribute("class", "x-point");
+    pt.setAttribute("cx", x);
+    pt.setAttribute("cy", y);
+    pt.setAttribute("r", 6);
+    svg.appendChild(pt);
+  }
+
+  function startAnimation() {
+    // Berechne Entfernungen zu allen Sendern
+    dR = dist(posR, posX);
+    dG = dist(posG, posX);
+    dB = dist(posB, posX);
+
+    // Treffzeit ist die maximale Entfernung geteilt durch Geschwindigkeit
+    t_x = Math.max(dR, dG, dB) / v;
+
+    // Startzeiten so, dass die Wellen genau bei t_x den Punkt erreichen
+    tR = t_x - dR / v;
+    tG = t_x - dG / v;
+    tB = t_x - dB / v;
+
+    // Setze aktuellen Treffpunkt schwarz gefüllt
+    currentXPoint.setAttribute('cx', posX.x);
+    currentXPoint.setAttribute('cy', posX.y);
+
+    // Wellen an Senderpositionen setzen
+    waveR.setAttribute('cx', posR.x);
+    waveR.setAttribute('cy', posR.y);
+    waveG.setAttribute('cx', posG.x);
+    waveG.setAttribute('cy', posG.y);
+    waveB.setAttribute('cx', posB.x);
+    waveB.setAttribute('cy', posB.y);
+
+    // Startzeit zurücksetzen
+    startTime = null;
+
+    // Animation neu starten
+    if(animationFrameId) cancelAnimationFrame(animationFrameId);
+    animationFrameId = requestAnimationFrame(animate);
+  }
+
+  // Klick-Handler
+  svg.addEventListener('click', (e) => {
+    // SVG-Koordinaten aus Mausposition berechnen
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+    // Alten Treffpunkt als weißen Kreis speichern
+    addAccumulatedXPoint(posX.x, posX.y);
+
+    // Neuen Treffpunkt setzen
+    posX = { x: svgP.x, y: svgP.y };
+
+    startAnimation();
+  });
+
+  // Initialen Treffpunkt setzen und Animation starten
+  addAccumulatedXPoint(posX.x, posX.y);
+  startAnimation();
+
+})();
+</script>
+
+</body>
+</html>
