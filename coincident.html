@@ -1,23 +1,8 @@
-<!--
-  🔧 SVG-Visualisierung: Point of Coincidence (Synchrone Signalüberlagerung mit Automatik und Formwahl)
-
-  Features:
-  - 3 Sender (RGB) senden Signale, die sich synchron an Treffpunkt X treffen.
-  - Treffpunkte bleiben als schwarze Quadrate erhalten, aktueller als schwarzer Kreis.
-  - Automatik läuft mit 20 Punkten in einer Form:
-    • Kreis, Dreieck, Zufallswolke (wahlweise).
-  - Klick oder Touch setzt neuen Punkt, stoppt Automatik für 5s.
-  - Vollbild-Schalter.
-
-  Berechnung:
-  - Distanz zu Sendern bestimmt Startzeiten für Synchronität.
--->
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Point of Coincidence</title>
+  <title>Point of Coincidence - Dreieck & Spirale</title>
   <style>
     body {
       margin: 0;
@@ -92,9 +77,9 @@
 <button id="fullscreenBtn" title="Vollbild">🔲</button>
 
 <select id="shapeSelect" title="Form der Treffpunkte">
-  <option value="circle">Kreis</option>
+  <option value="off">AUS</option>
   <option value="triangle">Dreieck</option>
-  <option value="random">Zufallswolke</option>
+  <option value="spiral">Spirale</option>
 </select>
 
 <svg id="svg" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet">
@@ -147,249 +132,203 @@
     return Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2);
   }
 
-  function radius(t, t_start) {
-    const dt = t - t_start;
-    return dt < 0 ? 0 : dt * v;
+  // Hilfsfunktion zum linearen Interpolieren zwischen 2 Punkten
+  function lerpPoint(p1, p2, t) {
+    return {
+      x: p1.x + (p2.x - p1.x) * t,
+      y: p1.y + (p2.y - p1.y) * t
+    };
   }
 
-  function checkArrival(t) {
-    const tol = 3;
-    return (
-      Math.abs(radius(t, tR) - dR) < tol &&
-      Math.abs(radius(t, tG) - dG) < tol &&
-      Math.abs(radius(t, tB) - dB) < tol
-    );
-  }
+  // Dreieck-Grundpunkte (gleich wie zuvor)
+  const triangleBasePoints = [
+    {x: 200, y: 120},
+    {x: 280, y: 280},
+    {x: 120, y: 280}
+  ];
 
-  function updateInfo(t) {
-    info.textContent =
-      `Zeit: ${t.toFixed(2)} s\n` +
-      `Treffzeit t_x: ${t_x.toFixed(3)} s\n` +
-      `Startzeiten: R=${tR.toFixed(3)}, G=${tG.toFixed(3)}, B=${tB.toFixed(3)}\n` +
-      `Treffpunkt: (${posX.x.toFixed(1)}, ${posX.y.toFixed(1)})\n` +
-      `Automatik: ${autoPlay ? '🟢 aktiv' : '🔴 unterbrochen'}`;
-  }
+  // Funktion: Dreieck-Kanten in insgesamt n Punkte aufteilen
+  function generateTrianglePoints(n) {
+    const points = [];
+    const edges = 3;
+    const pointsPerEdge = Math.floor(n / edges);
+    const remainder = n % edges;
 
-  function animate(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const t = (timestamp - startTime) / 1000;
+    for(let edge=0; edge<edges; edge++) {
+      const start = triangleBasePoints[edge];
+      const end = triangleBasePoints[(edge+1) % edges];
+      let count = pointsPerEdge + (edge === 0 ? remainder : 0);
 
-    waveR.setAttribute('r', radius(t, tR));
-    waveG.setAttribute('r', radius(t, tG));
-    waveB.setAttribute('r', radius(t, tB));
-
-    updateInfo(t);
-
-    if (checkArrival(t)) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-      if (autoPlay) {
-        setTimeout(() => {
-          advancePreset();
-        }, 300);
+      for(let i = 0; i < count; i++) {
+        const t = i / count;
+        points.push(lerpPoint(start, end, t));
       }
-      return;
-    }
-
-    animationFrameId = requestAnimationFrame(animate);
-  }
-
-  function addAccumulatedXPoint(x, y) {
-    const size = 6;
-    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    rect.setAttribute("class", "x-point");
-    rect.setAttribute("x", x - size/2);
-    rect.setAttribute("y", y - size/2);
-    rect.setAttribute("width", size);
-    rect.setAttribute("height", size);
-    svg.appendChild(rect);
-  }
-
-  function prepareAnimation() {
-    dR = dist(posR, posX);
-    dG = dist(posG, posX);
-    dB = dist(posB, posX);
-
-    t_x = Math.max(dR, dG, dB) / v;
-
-    tR = t_x - dR / v;
-    tG = t_x - dG / v;
-    tB = t_x - dB / v;
-
-    currentXPoint.setAttribute('cx', posX.x);
-    currentXPoint.setAttribute('cy', posX.y);
-
-    waveR.setAttribute('cx', posR.x);
-    waveR.setAttribute('cy', posR.y);
-    waveG.setAttribute('cx', posG.x);
-    waveG.setAttribute('cy', posG.y);
-    waveB.setAttribute('cx', posB.x);
-    waveB.setAttribute('cy', posB.y);
-
-    startTime = null;
-    if (animationFrameId) cancelAnimationFrame(animationFrameId);
-    animationFrameId = requestAnimationFrame(animate);
-  }
-
-  // Generiert Punkte im Kreis
-  function generateCircularPoints(n, centerX = 200, centerY = 200, radius = 40) {
-    const points = [];
-    const angleOffset = Math.random() * 2 * Math.PI;
-    for (let i = 0; i < n; i++) {
-      const angle = angleOffset + (2 * Math.PI * i) / n;
-      points.push({
-        x: centerX + Math.cos(angle) * radius,
-        y: centerY + Math.sin(angle) * radius
-      });
     }
     return points;
   }
 
-  // Generiert Punkte für gleichseitiges Dreieck (3 Ecken mit n/3 Punkten pro Seite)
-  function generateTrianglePoints(n, centerX = 200, centerY = 200, size = 80) {
+  // Spirale: centerX, centerY, windungen, punktzahl, abstand pro Radiant
+  function generateSpiralPoints(centerX, centerY, turns, pointsCount, spacing) {
     const points = [];
-    const sidePoints = Math.floor(n / 3);
-    const remainder = n - sidePoints * 3;
-    // Eckpunkte
-    const A = {
-      x: centerX,
-      y: centerY - size / Math.sqrt(3)
-    };
-    const B = {
-      x: centerX - size / 2,
-      y: centerY + size / (2 * Math.sqrt(3))
-    };
-    const C = {
-      x: centerX + size / 2,
-      y: centerY + size / (2 * Math.sqrt(3))
-    };
-
-    function interpolate(p1, p2, t) {
-      return { x: p1.x + (p2.x - p1.x) * t, y: p1.y + (p2.y - p1.y) * t };
-    }
-
-    for (let i = 0; i < sidePoints; i++) {
-      const t = i / sidePoints;
-      points.push(interpolate(A, B, t));
-    }
-    for (let i = 0; i < sidePoints; i++) {
-      const t = i / sidePoints;
-      points.push(interpolate(B, C, t));
-    }
-    for (let i = 0; i < sidePoints + remainder; i++) {
-      const t = i / (sidePoints + remainder);
-      points.push(interpolate(C, A, t));
-    }
-    return points;
-  }
-
-  // Zufällige Punkte in begrenztem Bereich (Wolke)
-  function generateRandomPoints(n, minX = 160, maxX = 240, minY = 160, maxY = 240) {
-    const points = [];
-    for (let i = 0; i < n; i++) {
-      points.push({
-        x: minX + Math.random() * (maxX - minX),
-        y: minY + Math.random() * (maxY - minY)
-      });
+    const maxAngle = turns * 2 * Math.PI;
+    for(let i = 0; i < pointsCount; i++) {
+      const t = i / (pointsCount - 1);
+      const angle = t * maxAngle;
+      const radius = spacing * angle;
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY + radius * Math.sin(angle);
+      points.push({x, y});
     }
     return points;
   }
 
   function generatePoints(shape) {
-    switch (shape) {
-      case 'triangle': return generateTrianglePoints(20);
-      case 'random': return generateRandomPoints(20);
-      case 'circle':
-      default: return generateCircularPoints(20);
+    if(shape === 'triangle') return generateTrianglePoints(15);
+    if(shape === 'spiral') return generateSpiralPoints(200, 180, 7, 300, 20);
+    return [];
+  }
+
+  function addAccumulatedXPoint(x, y) {
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("class", "x-point");
+    rect.setAttribute("width", 4);
+    rect.setAttribute("height", 4);
+    rect.setAttribute("x", x - 2);
+    rect.setAttribute("y", y - 2);
+    svg.appendChild(rect);
+  }
+
+  function prepareAnimation() {
+    dR = dist(posX, posR);
+    dG = dist(posX, posG);
+    dB = dist(posX, posB);
+
+    const maxD = Math.max(dR, dG, dB);
+    t_x = maxD / v;
+
+    tR = t_x - dR / v;
+    tG = t_x - dG / v;
+    tB = t_x - dB / v;
+
+    startTime = performance.now() / 1000;
+
+    waveR.setAttribute("r", 0);
+    waveG.setAttribute("r", 0);
+    waveB.setAttribute("r", 0);
+
+    currentXPoint.setAttribute("cx", posX.x);
+    currentXPoint.setAttribute("cy", posX.y);
+
+    if(animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId);
     }
+    animate();
   }
 
-  function advancePreset() {
-    if (currentPresetIndex >= presetPoints.length) {
-      presetPoints = generatePoints(shapeSelect.value);
-      currentPresetIndex = 0;
-    }
-    addAccumulatedXPoint(posX.x, posX.y);
-    posX = presetPoints[currentPresetIndex++];
-    prepareAnimation();
-  }
+  function animate() {
+    const now = performance.now() / 1000;
+    const t = now - startTime;
 
-  function resumeAutoPlay() {
-    autoPlay = true;
-    advancePreset();
-  }
+    const rR = t >= tR ? Math.min(v * (t - tR), dR) : 0;
+    const rG = t >= tG ? Math.min(v * (t - tG), dG) : 0;
+    const rB = t >= tB ? Math.min(v * (t - tB), dB) : 0;
 
-  function userSetPoint(x, y) {
-    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    waveR.setAttribute("r", rR);
+    waveG.setAttribute("r", rG);
+    waveB.setAttribute("r", rB);
 
-    autoPlay = false;
-    if (autoResumeTimer) clearTimeout(autoResumeTimer);
-    autoResumeTimer = setTimeout(resumeAutoPlay, autoResumeDelay);
+    info.textContent = 
+      `Ziel: (${posX.x.toFixed(1)}, ${posX.y.toFixed(1)})\n` +
+      `Dist R: ${dR.toFixed(1)} px\n` +
+      `Dist G: ${dG.toFixed(1)} px\n` +
+      `Dist B: ${dB.toFixed(1)} px\n` +
+      `Treffzeit: ${t_x.toFixed(3)} s\n` +
+      `Start R: ${tR.toFixed(3)} s\n` +
+      `Start G: ${tG.toFixed(3)} s\n` +
+      `Start B: ${tB.toFixed(3)} s\n` +
+      `Anim Zeit: ${t.toFixed(3)} s\n` +
+      `AutoPlay: ${autoPlay ? "AN" : "PAUSE"}`;
 
-    addAccumulatedXPoint(posX.x, posX.y);
-    posX = { x, y };
-    prepareAnimation();
-  }
+    if(rR === dR && rG === dG && rB === dB) {
+      addAccumulatedXPoint(posX.x, posX.y);
 
-  // Neuer pointerHandler mit Touch/Maus kompatibel + CTM-Check
-  function pointerHandler(e) {
-    e.preventDefault();
+      if(autoPlay && presetPoints.length > 0) {
+        setTimeout(() => {
+          currentPresetIndex = (currentPresetIndex + 1) % presetPoints.length;
+          posX = presetPoints[currentPresetIndex];
+          prepareAnimation();
+        }, 100);
+      }
 
-    let clientX, clientY;
-
-    if (e.touches && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-
-    const pt = svg.createSVGPoint();
-    pt.x = clientX;
-    pt.y = clientY;
-
-    const ctm = svg.getScreenCTM();
-    if (!ctm) {
-      console.warn('SVG CTM ist null, Klick ignoriert.');
+      animationFrameId = null;
       return;
     }
 
-    const svgP = pt.matrixTransform(ctm.inverse());
-
-    userSetPoint(svgP.x, svgP.y);
+    animationFrameId = requestAnimationFrame(animate);
   }
 
-  svg.addEventListener('pointerdown', pointerHandler, { passive: false });
+  function pointerHandler(event) {
+    event.preventDefault();
+
+    autoPlay = false;
+    if(autoResumeTimer) clearTimeout(autoResumeTimer);
+    autoResumeTimer = setTimeout(() => {
+      autoPlay = true;
+      if(presetPoints.length > 0) {
+        currentPresetIndex = 0;
+        posX = presetPoints[currentPresetIndex];
+        prepareAnimation();
+      }
+    }, autoResumeDelay);
+
+    const pt = svg.createSVGPoint();
+    pt.x = event.clientX;
+    pt.y = event.clientY;
+    const cursorpt = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+    posX = { x: cursorpt.x, y: cursorpt.y };
+    prepareAnimation();
+  }
+
+  function loadPreset(shape) {
+    presetPoints = generatePoints(shape);
+    currentPresetIndex = 0;
+    if(presetPoints.length > 0) {
+      posX = presetPoints[0];
+      prepareAnimation();
+      autoPlay = true;
+    } else {
+      autoPlay = false;
+      if(animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      waveR.setAttribute("r", 0);
+      waveG.setAttribute("r", 0);
+      waveB.setAttribute("r", 0);
+      info.textContent = 'Automatik AUS';
+      currentXPoint.setAttribute("cx", -100);
+      currentXPoint.setAttribute("cy", -100);
+    }
+  }
 
   fullscreenBtn.addEventListener('click', () => {
-    if (!document.fullscreenElement) {
-      svg.requestFullscreen().catch(err => {
-        alert(`Vollbildmodus konnte nicht aktiviert werden: ${err.message}`);
-      });
+    if(!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
     } else {
       document.exitFullscreen();
     }
   });
 
-  shapeSelect.addEventListener('change', () => {
-    presetPoints = generatePoints(shapeSelect.value);
-    currentPresetIndex = 0;
-    autoPlay = true;
-    addAccumulatedXPoint(posX.x, posX.y);
-    posX = presetPoints[0];
-    prepareAnimation();
+  shapeSelect.addEventListener('change', (e) => {
+    loadPreset(e.target.value);
   });
 
-  // Initialisierung
-  presetPoints = generatePoints(shapeSelect.value);
-  posX = presetPoints[0];
-  currentPresetIndex = 1;
-  prepareAnimation();
+  svg.addEventListener('pointerdown', pointerHandler);
 
+  loadPreset('off');
 })();
 </script>
 
 </body>
 </html>
-
