@@ -223,6 +223,8 @@ Bitte erstelle daraus eine Cutlist mit Zitaten und Zeitangaben im folgenden JSON
   let player = null;
   let currentSceneIndex = 0;
   let playbackInterval = null;
+  let sceneMonitor = null;
+
 
   function getCutlistFromQuery() {
     const params = new URLSearchParams(location.search);
@@ -392,7 +394,7 @@ Bitte erstelle daraus eine Cutlist mit Zitaten und Zeitangaben im folgenden JSON
     }, 300);
   }
 
-  let sceneMonitor = null;
+  
 
 function playScene(index) {
   if (!cutlistData || !player) return;
@@ -410,7 +412,7 @@ function playScene(index) {
   document.getElementById("sceneQuote").innerText = `"${scene.quote}"\n💬 ${scene.note || ""}`;
   document.getElementById("progressDisplay").innerText = `🎬 Szene ${index + 1} / ${cutlistData.scenes.length}`;
 
-  if (sceneTimer) clearTimeout(sceneTimer);
+  //if (sceneTimer) clearTimeout(sceneTimer);
   if (sceneMonitor) cancelAnimationFrame(sceneMonitor);
 
   const start = scene.start;
