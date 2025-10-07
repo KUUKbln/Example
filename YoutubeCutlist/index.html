@@ -219,6 +219,7 @@ Bitte erstelle daraus eine Cutlist mit Zitaten und Zeitangaben im folgenden JSON
 <script>
   let cutlistData = null;
   let autoPlay = true;
+  let autoReplay = true;
   let player = null;
   let currentSceneIndex = 0;
   let playbackInterval = null;
@@ -379,50 +380,81 @@ Bitte erstelle daraus eine Cutlist mit Zitaten und Zeitangaben im folgenden JSON
         if (autoPlay && currentSceneIndex + 1 < cutlistData.scenes.length) {
           playScene(currentSceneIndex + 1);
         } else {
-          document.getElementById("sceneQuote").innerText = "🎉 Alle Szenen abgespielt.";
+          if(!autoReplay){
+               document.getElementById("sceneQuote").innerText = "🎉 Alle Szenen abgespielt."
+          }else{
+              document.getElementById("sceneQuote").innerText = "🔁 Wiederhole von vorne...";
+              currentSceneIndex = -1;
+              playScene(0);
+          }
         }
       }
     }, 300);
   }
 
-  function playScene(index) {
-    if (!cutlistData) return;
-    const scene = cutlistData.scenes[index];
-    const video = cutlistData.videos.find(v => v.youtubeID === scene.sourceVideoID);
-    if (!video) {
-      console.warn("⚠️ Video nicht gefunden für Szene:", scene);
-      return;
-    }
+  let sceneMonitor = null;
 
-    console.log(`▶️ Szene ${index + 1}/${cutlistData.scenes.length}: ${scene.quote}`);
-    currentSceneIndex = index;
+function playScene(index) {
+  if (!cutlistData || !player) return;
 
-    document.getElementById("sceneQuote").innerText = `"${scene.quote}"\n💬 ${scene.note || ""}`;
-    document.getElementById("progressDisplay").innerText = `🎬 Szene ${index + 1} / ${cutlistData.scenes.length}`;
+  const scene = cutlistData.scenes[index];
+  const video = cutlistData.videos.find(v => v.youtubeID === scene.sourceVideoID);
+  if (!video) {
+    console.warn("⚠️ Video nicht gefunden für Szene:", scene);
+    return;
+  }
 
-    stopPlaybackMonitor();
+  console.log(`▶️ Szene ${index + 1}/${cutlistData.scenes.length}: ${scene.quote}`);
+  currentSceneIndex = index;
 
-    const currentVideoId = player.getVideoData().video_id;
-    const needsChange = currentVideoId !== video.youtubeID;
+  document.getElementById("sceneQuote").innerText = `"${scene.quote}"\n💬 ${scene.note || ""}`;
+  document.getElementById("progressDisplay").innerText = `🎬 Szene ${index + 1} / ${cutlistData.scenes.length}`;
 
-    if (needsChange) {
-      console.log("🎞️ Video-Wechsel:", currentVideoId, "→", video.youtubeID);
-      player.loadVideoById({
-        videoId: video.youtubeID,
-        startSeconds: scene.start,
-        endSeconds: scene.end
-      });
+  if (sceneTimer) clearTimeout(sceneTimer);
+  if (sceneMonitor) cancelAnimationFrame(sceneMonitor);
+
+  const start = scene.start;
+  const end = scene.end;
+
+  const currentVideoId = (typeof player.getVideoData === "function") ? player.getVideoData().video_id : null;
+  const needsChange = currentVideoId !== video.youtubeID;
+
+  if (needsChange) {
+    console.log("🎞️ Video-Wechsel:", currentVideoId, "→", video.youtubeID);
+    player.loadVideoById({
+      videoId: video.youtubeID,
+      startSeconds: start,
+    });
+  } else {
+    console.log("⏩ Selbes Video – Springe zu Szene");
+    player.seekTo(start, true);
+    player.playVideo();
+  }
+
+  if (autoPlay) monitorSceneEnd(end);
+}
+
+function monitorSceneEnd(endTime) {
+  function checkTime() {
+    const currentTime = player.getCurrentTime();
+    if (currentTime >= endTime) {
+      player.pauseVideo();
+
+      if (currentSceneIndex + 1 < cutlistData.scenes.length) {
+        playScene(currentSceneIndex + 1);
+      } else {
+        document.getElementById("sceneQuote").innerText = "🎉 Alle Szenen abgespielt.";
+      }
     } else {
-      console.log("⏩ Selbes Video – Springe zu Szene");
-      player.seekTo(scene.start);
-      player.playVideo();
-    }
-
-    if (autoPlay) {
-      startPlaybackMonitor(scene.end);
+      sceneMonitor = requestAnimationFrame(checkTime);
     }
   }
 
+  sceneMonitor = requestAnimationFrame(checkTime);
+}
+
+
+  
   function applyCutlistFromEditor() {
     try {
       const json = JSON.parse(document.getElementById("cutlistEditor").value);
