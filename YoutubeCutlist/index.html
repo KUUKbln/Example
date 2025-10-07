@@ -165,253 +165,217 @@ Bitte erstelle daraus eine Cutlist mit Zitaten und Zeitangaben im folgenden JSON
   }
 }</code></pre>
   </details>
+<script>
+  let cutlistData = null;
+  let autoPlay = true;
+  let player = null;
+  let currentSceneIndex = 0;
+  let sceneTimer = null;
 
-  <script>
-    let cutlistData = null;
-    let autoPlay = true;
-    let player = null;
-    let currentSceneIndex = 0;
-    let sceneTimer = null;
+  function getCutlistFromQuery() {
+    const params = new URLSearchParams(location.search);
+    return params.get("cutlist");
+  }
 
-    function getCutlistFromQuery() {
-      const params = new URLSearchParams(location.search);
-      return params.get("cutlist");
+  async function loadCutlist(path) {
+    try {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error("Cutlist konnte nicht geladen werden.");
+      return await res.json();
+    } catch (e) {
+      alert("❌ Fehler beim Laden der Cutlist: " + e.message);
+      return null;
     }
+  }
 
-    async function loadCutlist(path) {
-      try {
-        const res = await fetch(path);
-        if (!res.ok) throw new Error("Cutlist konnte nicht geladen werden.");
-        return await res.json();
-      } catch (e) {
-        alert("❌ Fehler beim Laden der Cutlist: " + e.message);
-        return null;
-      }
-    }
-
-    async function init() {
-      const cutlistFile = getCutlistFromQuery();
-      if (!cutlistFile) {
-        // Kein cutlist Parameter, lade Beispiel + Hinweis
-        const example = {
-          "videos": [{
-            "title": "Beispielvideo",
-            "youtubeID": "dQw4w9WgXcQ",
-            "youtubeURL": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-            "summaryInstruction": "Beispielszene",
-            "transcriptPath": "transcripts/example.txt",
-            "localVideoPath": null
-          }],
-          "scenes": [{
-            "start": 0,
-            "end": 10,
-            "quote": "Dies ist ein Beispielzitat.",
-            "note": "Beispielszene ohne echte Daten",
-            "tags": ["Beispiel"],
-            "sourceVideoID": "dQw4w9WgXcQ"
-          }],
-          "output": {
-            "title": "Beispiel-Projekt",
-            "description": "Dies ist eine Beispiel-Cutlist, da keine geladen wurde.",
-            "tags": ["Beispiel"],
-            "notes": "Bitte lade eine Cutlist über ?cutlist=Datei.json"
-          }
-        };
-        cutlistData = example;
-        document.getElementById("cutlistEditor").value = JSON.stringify(example, null, 2);
-        loadYouTubeAPI();
-        return;
-      }
-
-      const data = await loadCutlist(cutlistFile);
-      if (!data) return;
-
-      cutlistData = data;
-      document.getElementById("cutlistEditor").value = JSON.stringify(data, null, 2);
+  async function init() {
+    const cutlistFile = getCutlistFromQuery();
+    if (!cutlistFile) {
+      // Beispiel
+      const example = {
+        videos: [{
+          title: "Beispielvideo",
+          youtubeID: "dQw4w9WgXcQ",
+          youtubeURL: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          summaryInstruction: "Beispielszene",
+          transcriptPath: "transcripts/example.txt",
+          localVideoPath: null
+        }],
+        scenes: [{
+          start: 0,
+          end: 10,
+          quote: "Dies ist ein Beispielzitat.",
+          note: "Beispielszene ohne echte Daten",
+          tags: ["Beispiel"],
+          sourceVideoID: "dQw4w9WgXcQ"
+        }],
+        output: {
+          title: "Beispiel-Projekt",
+          description: "Dies ist eine Beispiel-Cutlist, da keine geladen wurde.",
+          tags: ["Beispiel"],
+          notes: "Bitte lade eine Cutlist über ?cutlist=Datei.json"
+        }
+      };
+      cutlistData = example;
+      document.getElementById("cutlistEditor").value = JSON.stringify(example, null, 2);
       loadYouTubeAPI();
+      return;
     }
 
-    function toggleAutoPlay() {
-      autoPlay = !autoPlay;
-      document.getElementById("autoPlayStatus").innerText = autoPlay ? "AN" : "AUS";
-    }
+    const data = await loadCutlist(cutlistFile);
+    if (!data) return;
 
-    function loadYouTubeAPI() {
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      document.body.appendChild(tag);
-    }
+    cutlistData = data;
+    document.getElementById("cutlistEditor").value = JSON.stringify(data, null, 2);
+    loadYouTubeAPI();
+  }
 
+  function toggleAutoPlay() {
+    autoPlay = !autoPlay;
+    document.getElementById("autoPlayStatus").innerText = autoPlay ? "AN" : "AUS";
+  }
 
-    function onYouTubeIframeAPIReady() {
-     alert("APIReady");
-      if (!cutlistData || !cutlistData.videos || cutlistData.videos.length === 0) {
-        alert("❌ Keine Videos in Cutlist gefunden.");
-        return;
+  function loadYouTubeAPI() {
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
+  }
+
+  function onYouTubeIframeAPIReady() {
+    console.log("🎥 YouTube API bereit");
+
+    const firstVideo = cutlistData?.scenes?.[0]?.sourceVideoID;
+    if (!firstVideo) return;
+
+    player = new YT.Player("ytplayer", {
+      height: "390",
+      width: "640",
+      videoId: firstVideo,
+      playerVars: {
+        enablejsapi: 1,
+        modestbranding: 1,
+        rel: 0,
+        autoplay: 0
+      },
+      events: {
+        onReady: buildSceneLinks,
+        onStateChange: onPlayerStateChange
       }
-      const firstVideo = cutlistData.videos[0];
-      if (!firstVideo.youtubeID) {
-        alert("❌ Kein gültiges Video gefunden.");
-        return;
-      }
+    });
+  }
 
-      player = new YT.Player('ytplayer', {
-        height: '390',
-        width: '640',
-        videoId: firstVideo.youtubeID || 'dQw4w9WgXcQ',
-        playerVars: {
-          origin: window.location.origin,  // oder ganz weglassen
-          enablejsapi: 1,
-          modestbranding: 1,
-          rel: 0,
-          autoplay: 1
-        },
-        events: {
-          'onReady': buildSceneLinks,
-          'onStateChange': onPlayerStateChange,
-        }
-      });
+  function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.PAUSED && sceneTimer) {
+      clearTimeout(sceneTimer);
+    }
+    if (event.data === YT.PlayerState.CUED) {
+      player.playVideo();
+    }
+  }
 
-      
-      //alert("APIReady done");
+  function playScene(index) {
+    if (!cutlistData) return;
+    const scene = cutlistData.scenes[index];
+    const video = cutlistData.videos.find(v => v.youtubeID === scene.sourceVideoID);
+    if (!video) {
+      console.warn("⚠️ Video nicht gefunden für Szene:", scene);
+      return;
     }
 
+    console.log(`▶️ Szene ${index + 1}/${cutlistData.scenes.length}: ${scene.quote}`);
+    currentSceneIndex = index;
 
+    document.getElementById("sceneQuote").innerText = `"${scene.quote}"\n💬 ${scene.note || ""}`;
+    document.getElementById("progressDisplay").innerText = `🎬 Szene ${index + 1} / ${cutlistData.scenes.length}`;
 
-    function alt_onPlayerStateChange(event) {
-      if (event.data === YT.PlayerState.PAUSED && sceneTimer) {
-          clearTimeout(sceneTimer);
-        }
-    }
-    
-    function onPlayerStateChange(event) {
-      if (event.data === YT.PlayerState.PAUSED && sceneTimer) {
-        clearTimeout(sceneTimer);
-      }
-    
-      if (event.data === YT.PlayerState.CUED) {
-        // Falls Player "bereit" ist, aber nicht startet, explizit starten
-        player.playVideo();
-      }
-    }
+    if (sceneTimer) clearTimeout(sceneTimer);
 
+    const currentVideoId = player.getVideoData().video_id;
+    const needsChange = currentVideoId !== video.youtubeID;
 
-   function playScene(index) {
-      if (!cutlistData) return;
-    
-      const scene = cutlistData.scenes[index];
-      const video = cutlistData.videos.find(v => v.youtubeID === scene.sourceVideoID);
-    
-      if (!video || !video.youtubeID) {
-        alert("❌ Quelle nicht gefunden für Szene: " + scene.quote);
-        return;
-      }
-    
-      currentSceneIndex = index;
-      document.getElementById("sceneQuote").innerText = `"${scene.quote}"\n💬 ${scene.note || ""}`;
-    
-      if (sceneTimer) clearTimeout(sceneTimer);
-    
-      // Expliziter Video-Wechsel — immer Video-ID setzen
+    if (needsChange) {
+      console.log("🎞️ Video-Wechsel:", currentVideoId, "→", video.youtubeID);
       player.loadVideoById({
         videoId: video.youtubeID,
         startSeconds: scene.start,
-        endSeconds: scene.end,
-        suggestedQuality: 'hd720'
+        endSeconds: scene.end
       });
-    
-      const duration = (scene.end - scene.start) * 1000;
-    
-      if (autoPlay) {
-        sceneTimer = setTimeout(() => {
-          if (currentSceneIndex + 1 < cutlistData.scenes.length) {
-            playScene(currentSceneIndex + 1);
-          } else {
-            document.getElementById("sceneQuote").innerText = "🎉 Alle Szenen abgespielt.";
-          }
-        }, duration);
-      }
+    } else {
+      console.log("⏩ Selbes Video – Springe zu Szene");
+      player.seekTo(scene.start);
+      player.playVideo();
     }
 
-    function alt_applyCutlistFromEditor() {
-      try {
-        const json = JSON.parse(document.getElementById("cutlistEditor").value);
-        cutlistData = json;
-        buildSceneLinks();
-        alert("✅ Cutlist übernommen.");
-      } catch (e) {
-        alert("❌ Fehler beim Parsen des JSON: " + e.message);
-      }
-    }
-    function applyCutlistFromEditor() {
-      try {
-        const json = JSON.parse(document.getElementById("cutlistEditor").value);
-        cutlistData = json;
-        buildSceneLinks();
-    
-        if (player) {
-          player.destroy(); // alten Player entfernen
+    const duration = (scene.end - scene.start) * 1000;
+
+    if (autoPlay) {
+      sceneTimer = setTimeout(() => {
+        if (currentSceneIndex + 1 < cutlistData.scenes.length) {
+          playScene(currentSceneIndex + 1);
+        } else {
+          document.getElementById("sceneQuote").innerText = "🎉 Alle Szenen abgespielt.";
         }
-    
-        onYouTubeIframeAPIReady(); // neuen Player mit erstem Video bauen
-    
-        alert("✅ Cutlist übernommen.");
-      } catch (e) {
-        alert("❌ Fehler beim Parsen des JSON: " + e.message);
-      }
+      }, duration);
     }
+  }
 
-    function downloadCutlist() {
-      const text = document.getElementById("cutlistEditor").value;
-      const blob = new Blob([text], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "cutlist.json";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+  function applyCutlistFromEditor() {
+    try {
+      const json = JSON.parse(document.getElementById("cutlistEditor").value);
+      cutlistData = json;
+      buildSceneLinks();
+      if (player) player.destroy();
+      onYouTubeIframeAPIReady();
+      alert("✅ Cutlist übernommen.");
+    } catch (e) {
+      alert("❌ Fehler beim Parsen der JSON: " + e.message);
     }
+  }
 
+  function downloadCutlist() {
+    const text = document.getElementById("cutlistEditor").value;
+    const blob = new Blob([text], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "cutlist.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
-    function buildSceneLinks() {
-      const container = document.getElementById("sceneButtons");
-      container.innerHTML = "";
+  function buildSceneLinks() {
+    const container = document.getElementById("sceneButtons");
+    container.innerHTML = "";
 
-      cutlistData.scenes.forEach((scene, index) => {
-        const video = cutlistData.videos.find(v => v.youtubeID === scene.sourceVideoID);
-        if (!video) return;
+    cutlistData.scenes.forEach((scene, index) => {
+      const video = cutlistData.videos.find(v => v.youtubeID === scene.sourceVideoID);
+      if (!video) return;
 
-        // Link mit Zeitangabe in Sekunden als Parameter (t=)
-        const link = document.createElement("a");
-        link.href = `https://www.youtube.com/watch?v=${video.youtubeID}&t=${Math.floor(scene.start)}s`;
-        link.innerText = scene.quote;
-        link.title = scene.note || "";
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
+      const wrapper = document.createElement("div");
+      wrapper.style.marginBottom = "10px";
 
-        link.style.display = "inline-block";
-        link.style.margin = "5px";
-        link.style.padding = "8px 12px";
-        link.style.backgroundColor = "#333";
-        link.style.color = "#fff";
-        link.style.textDecoration = "none";
-        link.style.borderRadius = "5px";
+      const button = document.createElement("button");
+      button.innerText = scene.quote;
+      button.title = scene.note || "";
+      button.onclick = () => playScene(index);
+      button.className = "scene-button";
+      wrapper.appendChild(button);
 
-        link.onmouseover = () => {
-          document.getElementById("sceneQuote").innerText = `"${scene.quote}"\n💬 ${scene.note || ""}`;
-        };
+      const link = document.createElement("a");
+      link.href = video.youtubeURL + `&t=${scene.start}s`;
+      link.target = "_blank";
+      link.innerText = "🔗";
+      link.className = "scene-link";
+      wrapper.appendChild(link);
 
-        link.onmouseout = () => {
-          document.getElementById("sceneQuote").innerText = `Szene nicht gestartet`;
-        };
+      container.appendChild(wrapper);
+    });
+  }
 
-        container.appendChild(link);
-      });
-    }
+  window.onload = init;
+</script>
 
-    window.onload = init;
-  </script>
-</body>
+ </body>
 </html>
