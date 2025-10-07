@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎬 Cutlist</title>
+  <style>
+   body {
+  font-family: sans-serif;
+  background-color: #111;
+  color: #eee;
+  margin: 0;
+  padding: 1em;
+}
+
+h1, h2 {
+  text-align: center;
+}
+
+iframe {
+  width: 100%;
+  max-width: 800px;
+  height: 450px;
+  display: block;
+  margin: 1em auto;
+  border: none;
+}
+
+#ytplayer {
+  width: 100%;
+  max-width: 800px;
+  height: 450px;
+  margin: 1em auto;
+}
+
+.scene-buttons {
+  margin-bottom: 2em;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.scene-button {
+  font-family: Courier, monospace;
+  background-color: white;
+  color: black;
+  border: none;
+  padding: 10px;
+  margin: 5px 0;
+  width: calc(100% - 30px);
+  text-align: left;
+  display: inline-block;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: pre-line;
+}
+
+.scene-button:hover {
+  background-color: #f0f0f0;
+}
+
+.scene-link {
+  margin-left: 10px;
+  text-decoration: none;
+  color: #ccc;
+  font-size: 1.2em;
+  vertical-align: middle;
+}
+
+.scene-link:hover {
+  color: white;
+}
+
+.quote {
+  text-align: center;
+  font-style: italic;
+  margin: 1em 0;
+  white-space: pre-line;
+}
+
+details {
+  background: #222;
+  padding: 1em;
+  margin: 1em auto;
+  border-radius: 5px;
+  max-width: 800px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 200px;
+  background: #111;
+  color: #eee;
+  border: 1px solid #444;
+  padding: 1em;
+  font-family: monospace;
+  resize: vertical;
+}
+
+.controls {
+  text-align: center;
+  margin: 1em 0;
+}
+
+.controls button {
+  margin: 0.5em;
+  padding: 0.5em 1em;
+  background: #333;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.controls button:hover {
+  background-color: #555;
+}
+
+.progress-overlay {
+  text-align: center;
+  font-size: 1em;
+  color: #aaa;
+  margin-top: 1em;
+}
+
+@media (max-width: 600px) {
+  iframe, #ytplayer {
+    height: 200px;
+  }
+
+  .scene-button {
+    font-size: 0.9em;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <h1>🎬 Cutlist Video Player</h1>
+
+  <!--iframe id="ytplayer" src="" allow="autoplay" allowfullscreen></iframe-->
+  <div id="ytplayer"></div>
+
+
+  <div class="controls">
+    <button onclick="toggleAutoPlay()">🔁 Auto: <span id="autoPlayStatus">AN</span></button>
+  </div>
+
+  <div class="scene-buttons" id="sceneButtons"></div>
+  <div class="quote" id="sceneQuote">Szene nicht gestartet</div>
+  <div class="progress-overlay" id="progressDisplay">🎬 Szene 0 / 0</div>
+
+  <details open>
+    <summary>📁 Geladene JSON bearbeiten</summary>
+    <textarea id="cutlistEditor" spellcheck="false"></textarea>
+    <div class="controls">
+      <button onclick="applyCutlistFromEditor()">✅ Übernehmen</button>
+      <button onclick="downloadCutlist()">⬇️ Download</button>
+    </div>
+  </details>
+
+  <details>
+    <summary>📌 Anleitung: Transkript per Bookmarklet laden</summary>
+    <p>Benutze das Bookmarklet im YouTube-Transkript, um es zu kopieren und als Datei zu speichern. Lade diese Datei später in deinen Editor und verarbeite sie mit ChatGPT oder manuell.</p>
+  </details>
+
+  <details>
+    <summary>🤖 Anleitung: Cutlist von ChatGPT erstellen lassen</summary>
+    <p>Gib ChatGPT folgende Anleitung:</p>
+    <pre><code>
+Du erstellst eine Zusammenfassung für mehrere Youtube-Videos.
+Bitte frage mich nach dem Thema und dann nach Transkript-Texten der Youtube-Videos.
+Bitte erstelle daraus eine Cutlist mit Zitaten und Zeitangaben im folgenden JSON-Format:
+
+{
+  "videos": [...],
+  "scenes": [...],
+  "output": {
+    "title": "...",
+    "description": "...",
+    "tags": [...],
+    "notes": "..."
+  }
+}
+    </code></pre>
+  </details>
+
+  <details>
+    <summary>📐 Formatbeispiel für JSON-Cutlist</summary>
+    <pre><code>{
+  "videos": [
+    {
+      "title": "Titel",
+      "youtubeID": "abc123",
+      "youtubeURL": "https://youtube.com/watch?v=abc123",
+      "summaryInstruction": "Zusammenfassung...",
+      "transcriptPath": "transcripts/datei.txt",
+      "localVideoPath": null
+    }
+  ],
+  "scenes": [
+    {
+      "start": 10,
+      "end": 20,
+      "quote": "Zitat",
+      "note": "Hinweis",
+      "tags": ["Tag1"],
+      "sourceVideoID": "abc123"
+    }
+  ],
+  "output": {
+    "title": "Projekt",
+    "description": "Beschreibung",
+    "tags": ["Tag1", "Tag2"],
+    "notes": "Sonstige Hinweise"
+  }
+}</code></pre>
+  </details>
+
+<script>
+  let cutlistData = null;
+  let autoPlay = true;
+  let autoReplay = true;
+  let player = null;
+  let currentSceneIndex = 0;
+  let playbackInterval = null;
+  let sceneMonitor = null;
+
+  function getCutlistFromQuery() {
+    const params = new URLSearchParams(location.search);
+    return params.get("cutlist");
+  }
+
+  async function loadCutlist(path) {
+    try {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error("Cutlist konnte nicht geladen werden.");
+      return await res.json();
+    } catch (e) {
+      alert("❌ Fehler beim Laden der Cutlist: " + e.message);
+      return null;
+    }
+  }
+
+  async function init() {
+    const cutlistFile = getCutlistFromQuery();
+    if (!cutlistFile) {
+      const example = {
+        "videos": [
+          {
+            "title": "Fler zu Shahak Shapira, Rezo und #unhatewomen",
+            "youtubeID": "y8HoSXAR_LY",
+            "youtubeURL": "https://www.youtube.com/watch?v=y8HoSXAR_LY",
+            "summaryInstruction": "Ausschnitte von Fler zu seinem Konflikt mit Shahak Shapira, Reaktionen auf #unhatewomen und Social Media Kritik",
+            "transcriptPath": "transcripts/fler_shapira.txt",
+            "localVideoPath": null
+          },
+          {
+            "title": "Beef mit Fler | Shapira Shapira",
+            "youtubeID": "brtBqtKh-3M",
+            "youtubeURL": "https://www.youtube.com/watch?v=brtBqtKh-3M",
+            "summaryInstruction": "Shapira erzählt humorvoll und sarkastisch von seinem Beef mit Fler und den Reaktionen im Netz",
+            "transcriptPath": "transcripts/shapira_fler.txt",
+            "localVideoPath": null
+          }
+        ],
+        "scenes": [
+          {
+            "start": 9,
+            "end": 15,
+            "quote": "gab es gestern auf twitter und auf instagram so ein riesen hin und her mit diesem möchtegern comedian...",
+            "note": "Fler über den Auslöser des Streits mit Shapira",
+            "tags": ["Fler", "Shapira", "Twitter", "Konflikt"],
+            "sourceVideoID": "y8HoSXAR_LY"
+          },
+          {
+            "start": 7,
+            "end": 12,
+            "quote": "ich hatte mal beef mit flair... es war komplett meine schuld",
+            "note": "Shapira beginnt selbstironisch mit dem Konflikt",
+            "tags": ["Beef", "Shapira", "Ironie"],
+            "sourceVideoID": "brtBqtKh-3M"
+          },
+          {
+            "start": 27,
+            "end": 32,
+            "quote": "ich wollte flair keinesfalls ideologisch mit bernd röcker vergleichen...",
+            "note": "Shapira relativiert seinen kontroversen Vergleich",
+            "tags": ["Vergleich", "Provokation", "Shapira"],
+            "sourceVideoID": "brtBqtKh-3M"
+          },
+          {
+            "start": 41,
+            "end": 44,
+            "quote": "einige stunden später bin ich wieder auf facebook... flair hat kommentiert: 'sehen uns :)'",
+            "note": "Fler reagiert – erste Eskalationsstufe",
+            "tags": ["Facebook", "Fler", "Shapira"],
+            "sourceVideoID": "brtBqtKh-3M"
+          }
+        ],
+        "output": {
+          "title": "Fler vs. Shapira – Social Media Beef & Eskalation",
+          "description": "Schnittplan für ein satirisch-dokumentarisches Video über den Streit zwischen Rapper Fler und Comedian Shahak Shapira. Enthält Originalzitate beider Seiten, mediale Reaktionen, Fan-Kommentare sowie kritische Reflexion.",
+          "tags": ["Fler", "Shapira", "Beef", "Satire", "Social Media", "Rap", "Kritik", "Medien", "#unhatewomen"],
+          "notes": "Szenen stammen aus zwei YouTube-Videos; teilweise humorvoll, teilweise ernst. Ziel: ausgewogene Darstellung des Konflikts mit dramaturgischem Aufbau."
+        }
+      };
+      cutlistData = example;
+      document.getElementById("cutlistEditor").value = JSON.stringify(example, null, 2);
+      loadYouTubeAPI();
+      return;
+    }
+
+    const data = await loadCutlist(cutlistFile);
+    if (!data) return;
+
+    cutlistData = data;
+    document.getElementById("cutlistEditor").value = JSON.stringify(data, null, 2);
+    loadYouTubeAPI();
+  }
+
+  function toggleAutoPlay() {
+    autoPlay = !autoPlay;
+    document.getElementById("autoPlayStatus").innerText = autoPlay ? "AN" : "AUS";
+  }
+
+  function loadYouTubeAPI() {
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
+  }
+
+  function onYouTubeIframeAPIReady() {
+    console.log("🎥 YouTube API bereit");
+
+    const firstVideo = cutlistData?.scenes?.[0]?.sourceVideoID;
+    if (!firstVideo) return;
+
+    player = new YT.Player("ytplayer", {
+      height: "390",
+      width: "640",
+      videoId: firstVideo,
+      playerVars: {
+        enablejsapi: 1,
+        modestbranding: 1,
+        rel: 0,
+        autoplay: 0
+      },
+      events: {
+        onReady: buildSceneLinks,
+        onStateChange: onPlayerStateChange
+      }
+    });
+  }
+
+    function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.PAUSED) {
+      stopPlaybackMonitor();
+    }
+
+    if (event.data === YT.PlayerState.CUED) {
+      player.playVideo();
+    }
+  }
+
+  function stopPlaybackMonitor() {
+    if (playbackInterval) {
+      clearInterval(playbackInterval);
+      playbackInterval = null;
+    }
+  }
+
+  function startPlaybackMonitor(sceneEnd) {
+    stopPlaybackMonitor();
+    playbackInterval = setInterval(() => {
+      if (!player || typeof player.getCurrentTime !== "function") return;
+
+      const currentTime = player.getCurrentTime();
+      if (currentTime >= sceneEnd) {
+        stopPlaybackMonitor();
+
+        if (autoPlay && currentSceneIndex + 1 < cutlistData.scenes.length) {
+          playScene(currentSceneIndex + 1);
+        } else {
+          if (!autoReplay) {
+            document.getElementById("sceneQuote").innerText = "🎉 Alle Szenen abgespielt.";
+          } else {
+            document.getElementById("sceneQuote").innerText = "🔁 Wiederhole von vorne...";
+            currentSceneIndex = -1;
+            playScene(0);
+          }
+        }
+      }
+    }, 300);
+  }
+
+  function playScene(index) {
+    if (!cutlistData || !player) return;
+
+    const scene = cutlistData.scenes[index];
+    const video = cutlistData.videos.find(v => v.youtubeID === scene.sourceVideoID);
+    if (!video) {
+      console.warn("⚠️ Video nicht gefunden für Szene:", scene);
+      return;
+    }
+
+    console.log(`▶️ Szene ${index + 1}/${cutlistData.scenes.length}: ${scene.quote}`);
+    currentSceneIndex = index;
+
+    document.getElementById("sceneQuote").innerText = `"${scene.quote}"\n💬 ${scene.note || ""}`;
+    document.getElementById("progressDisplay").innerText = `🎬 Szene ${index + 1} / ${cutlistData.scenes.length}`;
+
+    if (sceneMonitor) cancelAnimationFrame(sceneMonitor);
+
+    const start = scene.start;
+    const end = scene.end;
+
+    const currentVideoId = (typeof player.getVideoData === "function") ? player.getVideoData().video_id : null;
+    const needsChange = currentVideoId !== video.youtubeID;
+
+    if (needsChange) {
+      console.log("🎞️ Video-Wechsel:", currentVideoId, "→", video.youtubeID);
+      player.loadVideoById({
+        videoId: video.youtubeID,
+        startSeconds: start,
+      });
+    } else {
+      console.log("⏩ Selbes Video – Springe zu Szene");
+      player.seekTo(start, true);
+      player.playVideo();
+    }
+
+    if (autoPlay) monitorSceneEnd(end);
+  }
+
+  function monitorSceneEnd(endTime) {
+    function checkTime() {
+      const currentTime = player.getCurrentTime();
+      if (currentTime >= endTime) {
+        player.pauseVideo();
+
+        if (currentSceneIndex + 1 < cutlistData.scenes.length) {
+          playScene(currentSceneIndex + 1);
+        } else {
+          document.getElementById("sceneQuote").innerText = "🎉 Alle Szenen abgespielt.";
+        }
+      } else {
+        sceneMonitor = requestAnimationFrame(checkTime);
+      }
+    }
+
+    sceneMonitor = requestAnimationFrame(checkTime);
+  }
+
+  function applyCutlistFromEditor() {
+    try {
+      const json = JSON.parse(document.getElementById("cutlistEditor").value);
+      cutlistData = json;
+      buildSceneLinks();
+      if (player) player.destroy();
+      onYouTubeIframeAPIReady();
+      alert("✅ Cutlist übernommen.");
+    } catch (e) {
+      alert("❌ Fehler beim Parsen der JSON: " + e.message);
+    }
+  }
+
+  function downloadCutlist() {
+    const text = document.getElementById("cutlistEditor").value;
+    const blob = new Blob([text], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "cutlist.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function buildSceneLinks() {
+    const container = document.getElementById("sceneButtons");
+    container.innerHTML = "";
+
+    cutlistData.scenes.forEach((scene, index) => {
+      const video = cutlistData.videos.find(v => v.youtubeID === scene.sourceVideoID);
+      if (!video) return;
+
+      const wrapper = document.createElement("div");
+      wrapper.style.marginBottom = "10px";
+
+      const button = document.createElement("button");
+      button.innerText = scene.quote;
+      button.title = scene.note || "";
+      button.onclick = () => playScene(index);
+      button.className = "scene-button";
+      wrapper.appendChild(button);
+
+      const link = document.createElement("a");
+      link.href = video.youtubeURL + `&t=${scene.start}s`;
+      link.target = "_blank";
+      link.innerText = "🔗";
+      link.className = "scene-link";
+      wrapper.appendChild(link);
+
+      container.appendChild(wrapper);
+    });
+  }
+
+  window.onload = init;
+</script>
+
+
+ </body>
+</html>
