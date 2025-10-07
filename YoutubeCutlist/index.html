@@ -244,29 +244,65 @@ Bitte erstelle daraus eine Cutlist mit Zitaten und Zeitangaben im folgenden JSON
     if (!cutlistFile) {
       // Beispiel
       const example = {
-        videos: [{
-          title: "Beispielvideo",
-          youtubeID: "dQw4w9WgXcQ",
-          youtubeURL: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-          summaryInstruction: "Beispielszene",
-          transcriptPath: "transcripts/example.txt",
-          localVideoPath: null
-        }],
-        scenes: [{
-          start: 0,
-          end: 10,
-          quote: "Dies ist ein Beispielzitat.",
-          note: "Beispielszene ohne echte Daten",
-          tags: ["Beispiel"],
-          sourceVideoID: "dQw4w9WgXcQ"
-        }],
-        output: {
-          title: "Beispiel-Projekt",
-          description: "Dies ist eine Beispiel-Cutlist, da keine geladen wurde.",
-          tags: ["Beispiel"],
-          notes: "Bitte lade eine Cutlist über ?cutlist=Datei.json"
-        }
-      };
+  "videos": [
+    {
+      "title": "Fler zu Shahak Shapira, Rezo und #unhatewomen",
+      "youtubeID": "y8HoSXAR_LY",
+      "youtubeURL": "https://www.youtube.com/watch?v=y8HoSXAR_LY",
+      "summaryInstruction": "Ausschnitte von Fler zu seinem Konflikt mit Shahak Shapira, Reaktionen auf #unhatewomen und Social Media Kritik",
+      "transcriptPath": "transcripts/fler_shapira.txt",
+      "localVideoPath": null
+    },
+    {
+      "title": "Beef mit Fler | Shapira Shapira",
+      "youtubeID": "brtBqtKh-3M",
+      "youtubeURL": "https://www.youtube.com/watch?v=brtBqtKh-3M",
+      "summaryInstruction": "Shapira erzählt humorvoll und sarkastisch von seinem Beef mit Fler und den Reaktionen im Netz",
+      "transcriptPath": "transcripts/shapira_fler.txt",
+      "localVideoPath": null
+    }
+  ],
+  "scenes": [
+    {
+      "start": 0,
+      "end": 10,
+      "quote": "gab es gestern auf twitter und auf instagram so ein riesen hin und her mit diesem möchtegern comedian...",
+      "note": "Fler über den Auslöser des Streits mit Shapira",
+      "tags": ["Fler", "Shapira", "Twitter", "Konflikt"],
+      "sourceVideoID": "y8HoSXAR_LY"
+    },
+    {
+      "start": 7,
+      "end": 20,
+      "quote": "ich hatte mal beef mit flair... es war komplett meine schuld",
+      "note": "Shapira beginnt selbstironisch mit dem Konflikt",
+      "tags": ["Beef", "Shapira", "Ironie"],
+      "sourceVideoID": "brtBqtKh-3M"
+    },
+    {
+      "start": 27,
+      "end": 41,
+      "quote": "ich wollte flair keinesfalls ideologisch mit bernd röcker vergleichen...",
+      "note": "Shapira relativiert seinen kontroversen Vergleich",
+      "tags": ["Vergleich", "Provokation", "Shapira"],
+      "sourceVideoID": "brtBqtKh-3M"
+    },
+    {
+      "start": 41,
+      "end": 78,
+      "quote": "einige stunden später bin ich wieder auf facebook... flair hat kommentiert: 'sehen uns :)'",
+      "note": "Fler reagiert – erste Eskalationsstufe",
+      "tags": ["Facebook", "Fler", "Shapira"],
+      "sourceVideoID": "brtBqtKh-3M"
+    }
+  ],
+  "output": {
+    "title": "Fler vs. Shapira – Social Media Beef & Eskalation",
+    "description": "Schnittplan für ein satirisch-dokumentarisches Video über den Streit zwischen Rapper Fler und Comedian Shahak Shapira. Enthält Originalzitate beider Seiten, mediale Reaktionen, Fan-Kommentare sowie kritische Reflexion.",
+    "tags": ["Fler", "Shapira", "Beef", "Satire", "Social Media", "Rap", "Kritik", "Medien", "#unhatewomen"],
+    "notes": "Szenen stammen aus zwei YouTube-Videos; teilweise humorvoll, teilweise ernst. Ziel: ausgewogene Darstellung des Konflikts mit dramaturgischem Aufbau."
+  }
+};
       cutlistData = example;
       document.getElementById("cutlistEditor").value = JSON.stringify(example, null, 2);
       loadYouTubeAPI();
