@@ -278,36 +278,50 @@ Bitte erstelle daraus eine Cutlist mit Zitaten und Zeitangaben im folgenden JSON
 
 
 
+    function alt_onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PAUSED && sceneTimer) {
+          clearTimeout(sceneTimer);
+        }
+    }
+    
     function onPlayerStateChange(event) {
       if (event.data === YT.PlayerState.PAUSED && sceneTimer) {
         clearTimeout(sceneTimer);
       }
+    
+      if (event.data === YT.PlayerState.CUED) {
+        // Falls Player "bereit" ist, aber nicht startet, explizit starten
+        player.playVideo();
+      }
     }
 
-    function playScene(index) {
-      if (!cutlistData) return;
 
+   function playScene(index) {
+      if (!cutlistData) return;
+    
       const scene = cutlistData.scenes[index];
       const video = cutlistData.videos.find(v => v.youtubeID === scene.sourceVideoID);
-
+    
       if (!video || !video.youtubeID) {
         alert("❌ Quelle nicht gefunden für Szene: " + scene.quote);
         return;
       }
-
+    
       currentSceneIndex = index;
       document.getElementById("sceneQuote").innerText = `"${scene.quote}"\n💬 ${scene.note || ""}`;
-
+    
       if (sceneTimer) clearTimeout(sceneTimer);
-
+    
+      // Expliziter Video-Wechsel — immer Video-ID setzen
       player.loadVideoById({
         videoId: video.youtubeID,
         startSeconds: scene.start,
-        endSeconds: scene.end
+        endSeconds: scene.end,
+        suggestedQuality: 'hd720'
       });
-
+    
       const duration = (scene.end - scene.start) * 1000;
-
+    
       if (autoPlay) {
         sceneTimer = setTimeout(() => {
           if (currentSceneIndex + 1 < cutlistData.scenes.length) {
