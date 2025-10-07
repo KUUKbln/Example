@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<title>Video.js YouTube + Lokales Video Beispiel</title>
+
+<!-- Video.js CSS -->
+<link href="libs/video-js.min.css" rel="stylesheet" />
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 720px;
+    margin: 2rem auto;
+  }
+  video {
+    margin-bottom: 2rem;
+  }
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+</style>
+</head>
+<body>
+
+<h2>YouTube Video</h2>
+<video
+  id="youtube-player"
+  class="video-js vjs-default-skin"
+  controls
+  width="640"
+  height="360"
+  data-setup='{
+    "techOrder": ["youtube"],
+    "sources": [{
+      "type": "video/youtube",
+      "src": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    }]
+  }'
+></video>
+
+<hr />
+
+<h2>Lokales Video (mp4)</h2>
+
+<label for="file-input">Lokale Videodatei auswählen:</label>
+<input type="file" id="file-input" accept="video/mp4,video/webm,video/ogg" />
+
+<video
+  id="local-player"
+  class="video-js vjs-default-skin"
+  controls
+  width="640"
+  height="360"
+  preload="metadata"
+>
+  <source src="sample-video.mp4" type="video/mp4" />
+  Dein Browser unterstützt das Video-Tag nicht.
+</video>
+
+<!-- Video.js JS -->
+<script src="libs/video.min.js"></script>
+<script src="libs/Youtube.min.js"></script>
+
+<script>
+  // YouTube Player initialisiert automatisch via data-setup
+
+  // Local player initialisieren
+  const localPlayer = videojs('local-player');
+
+  // Datei-Auswahl ändern
+  document.getElementById('file-input').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Lokale Datei als URL laden
+    const fileURL = URL.createObjectURL(file);
+
+    // Player-Quelle wechseln
+    localPlayer.src({ type: file.type, src: fileURL });
+    localPlayer.play();
+  });
+</script>
+
+</body>
+</html>
+
