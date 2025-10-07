@@ -319,11 +319,29 @@ Bitte erstelle daraus eine Cutlist mit Zitaten und Zeitangaben im folgenden JSON
       }
     }
 
+    function alt_applyCutlistFromEditor() {
+      try {
+        const json = JSON.parse(document.getElementById("cutlistEditor").value);
+        cutlistData = json;
+        buildSceneLinks();
+        alert("✅ Cutlist übernommen.");
+      } catch (e) {
+        alert("❌ Fehler beim Parsen des JSON: " + e.message);
+      }
+    }
     function applyCutlistFromEditor() {
       try {
         const json = JSON.parse(document.getElementById("cutlistEditor").value);
         cutlistData = json;
         buildSceneLinks();
+    
+        if (player && cutlistData.videos && cutlistData.videos.length > 0) {
+          const firstVideo = cutlistData.videos[0];
+          if (firstVideo.youtubeID) {
+            player.loadVideoById(firstVideo.youtubeID);
+          }
+        }
+    
         alert("✅ Cutlist übernommen.");
       } catch (e) {
         alert("❌ Fehler beim Parsen des JSON: " + e.message);
