@@ -335,12 +335,11 @@ Bitte erstelle daraus eine Cutlist mit Zitaten und Zeitangaben im folgenden JSON
         cutlistData = json;
         buildSceneLinks();
     
-        if (player && cutlistData.videos && cutlistData.videos.length > 0) {
-          const firstVideo = cutlistData.videos[0];
-          if (firstVideo.youtubeID) {
-            player.loadVideoById(firstVideo.youtubeID);
-          }
+        if (player) {
+          player.destroy(); // alten Player entfernen
         }
+    
+        onYouTubeIframeAPIReady(); // neuen Player mit erstem Video bauen
     
         alert("✅ Cutlist übernommen.");
       } catch (e) {
