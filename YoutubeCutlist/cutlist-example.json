@@ -1,0 +1,124 @@
+{
+  "videos": [
+    {
+      "title": "Fler zu Shahak Shapira, Rezo und #unhatewomen",
+      "youtubeID": "y8HoSXAR_LY",
+      "youtubeURL": "https://www.youtube.com/watch?v=y8HoSXAR_LY",
+      "summaryInstruction": "Ausschnitte von Fler zu seinem Konflikt mit Shahak Shapira, Reaktionen auf #unhatewomen und Social Media Kritik",
+      "transcriptPath": "transcripts/fler_shapira.txt",
+      "localVideoPath": null
+    },
+    {
+      "title": "Beef mit Fler | Shapira Shapira",
+      "youtubeID": "brtBqtKh-3M",
+      "youtubeURL": "https://www.youtube.com/watch?v=brtBqtKh-3M",
+      "summaryInstruction": "Shapira erzählt humorvoll und sarkastisch von seinem Beef mit Fler und den Reaktionen im Netz",
+      "transcriptPath": "transcripts/shapira_fler.txt",
+      "localVideoPath": null
+    }
+  ],
+  "scenes": [
+    {
+      "start": 0,
+      "end": 5,
+      "quote": "gab es gestern auf twitter und auf instagram so ein riesen hin und her mit diesem möchtegern comedian...",
+      "note": "Fler über den Auslöser des Streits mit Shapira",
+      "tags": ["Fler", "Shapira", "Twitter", "Konflikt"],
+      "sourceVideoID": "y8HoSXAR_LY"
+    },
+    {
+      "start": 0,
+      "end": 27,
+      "quote": "ich hatte mal beef mit flair... es war komplett meine schuld",
+      "note": "Shapira beginnt selbstironisch mit dem Konflikt",
+      "tags": ["Beef", "Shapira", "Ironie"],
+      "sourceVideoID": "brtBqtKh-3M"
+    },
+    {
+      "start": 27,
+      "end": 41,
+      "quote": "ich wollte flair keinesfalls ideologisch mit bernd röcker vergleichen...",
+      "note": "Shapira relativiert seinen kontroversen Vergleich",
+      "tags": ["Vergleich", "Provokation", "Shapira"],
+      "sourceVideoID": "brtBqtKh-3M"
+    },
+    {
+      "start": 41,
+      "end": 78,
+      "quote": "einige stunden später bin ich wieder auf facebook... flair hat kommentiert: 'sehen uns :)'",
+      "note": "Fler reagiert – erste Eskalationsstufe",
+      "tags": ["Facebook", "Fler", "Shapira"],
+      "sourceVideoID": "brtBqtKh-3M"
+    },
+    {
+      "start": 104,
+      "end": 122,
+      "quote": "hoffe du verlässt den humor nicht, wenn ich die tage mal vor dir stehe... trust Fler",
+      "note": "Fler antwortet kryptisch und leicht bedrohlich",
+      "tags": ["Drohung", "Fler", "Shapira"],
+      "sourceVideoID": "brtBqtKh-3M"
+    },
+    {
+      "start": 140,
+      "end": 195,
+      "quote": "es reizt den rapper, du weißt, du kriegst dadurch aufmerksamkeit",
+      "note": "Fler wirft Shapira gezielte Provokation für Aufmerksamkeit vor",
+      "tags": ["Fler", "Provokation", "Shapira"],
+      "sourceVideoID": "y8HoSXAR_LY"
+    },
+    {
+      "start": 177,
+      "end": 205,
+      "quote": "einer von Flers Fans hat mich sehr wütend angeschrieben... 'Flair wird dich einfach kaputt schlagen'",
+      "note": "Fan-Gewaltandrohung gegen Shapira",
+      "tags": ["Fan", "Drohung", "Shapira"],
+      "sourceVideoID": "brtBqtKh-3M"
+    },
+    {
+      "start": 248,
+      "end": 299,
+      "quote": "Kämen postet sein Abizeugnis in die Kommentare... um zu zeigen, dass er schlagen darf",
+      "note": "Absurder Fan-Moment, Shapira kommentiert satirisch",
+      "tags": ["Satire", "Facebook", "Jura"],
+      "sourceVideoID": "brtBqtKh-3M"
+    },
+    {
+      "start": 225,
+      "end": 255,
+      "quote": "viele grüße an diesen rezo... seine art und weise war korrekt",
+      "note": "Fler respektiert Rezos Kritikstil im Gegensatz zu Shapira",
+      "tags": ["Rezo", "Respekt", "Fler"],
+      "sourceVideoID": "y8HoSXAR_LY"
+    },
+    {
+      "start": 310,
+      "end": 355,
+      "quote": "die berliner polizei muss wieder auf twitter zuspruch geben... man fühlt sich jetzt als mensch zweiter klasse",
+      "note": "Fler kritisiert Berliner Polizei für öffentliche Parteinahme",
+      "tags": ["Polizei", "Twitter", "Fler"],
+      "sourceVideoID": "y8HoSXAR_LY"
+    },
+    {
+      "start": 390,
+      "end": 430,
+      "quote": "wenn du frech bist und ich sehe dich auf der straße, dann reagiere ich wie ein mensch",
+      "note": "Fler betont Ernsthaftigkeit seiner Reaktionen – auch offline",
+      "tags": ["Konflikt", "Realität", "Fler"],
+      "sourceVideoID": "y8HoSXAR_LY"
+    },
+    {
+      "start": 465,
+      "end": 485,
+      "quote": "bild.de hat schon den artikel dazu gebracht... was die frauen geschrieben haben zeigt bild.de natürlich nicht",
+      "note": "Fler wirft Medien Einseitigkeit vor",
+      "tags": ["BILD", "Medienkritik", "Fler"],
+      "sourceVideoID": "y8HoSXAR_LY"
+    }
+  ],
+  "output": {
+    "title": "Fler vs. Shapira – Social Media Beef & Eskalation",
+    "description": "Schnittplan für ein satirisch-dokumentarisches Video über den Streit zwischen Rapper Fler und Comedian Shahak Shapira. Enthält Originalzitate beider Seiten, mediale Reaktionen, Fan-Kommentare sowie kritische Reflexion.",
+    "tags": ["Fler", "Shapira", "Beef", "Satire", "Social Media", "Rap", "Kritik", "Medien", "#unhatewomen"],
+    "notes": "Szenen stammen aus zwei YouTube-Videos; teilweise humorvoll, teilweise ernst. Ziel: ausgewogene Darstellung des Konflikts mit dramaturgischem Aufbau."
+  }
+}
