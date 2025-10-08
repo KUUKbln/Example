@@ -1,0 +1,229 @@
+{
+  "videos": [
+    {
+      "title": "Glück – Gedanken und Impulse",
+      "youtubeID": "BXdP4nzU1-U",
+      "youtubeURL": "https://www.youtube.com/watch?v=BXdP4nzU1-U",
+      "summaryInstruction": "Allgemeine Gedanken zum Glück, verschiedene Perspektiven",
+      "transcriptPath": "transcripts/glueck1.txt",
+      "localVideoPath": null
+    },
+    {
+      "title": "Glück finden – Strategien & Geschichten",
+      "youtubeID": "fEFXthnmLIk",
+      "youtubeURL": "https://www.youtube.com/watch?v=fEFXthnmLIk",
+      "summaryInstruction": "Ideen und Erzählungen, wie Menschen Glück erlebt haben",
+      "transcriptPath": "transcripts/glueck2.txt",
+      "localVideoPath": null
+    },
+    {
+      "title": "Was ist Glück? – Philosophische Perspektive",
+      "youtubeID": "zUdaPw7ZMog",
+      "youtubeURL": "https://www.youtube.com/watch?v=zUdaPw7ZMog",
+      "summaryInstruction": "Philosophie, Psychologie und Reflexion über das Glück",
+      "transcriptPath": "transcripts/glueck3.txt",
+      "localVideoPath": null
+    }
+  ],
+  "scenes": [
+    {
+      "start": 10,
+      "end": 15,
+      "quote": "Ich habe aufgehört, zu denken, dass ich mehr brauche.",
+      "note": "Minimalismus & Genügsamkeit",
+      "tags": ["Minimalismus", "Genügsamkeit", "Verzicht"],
+      "sourceVideoID": "fEFXthnmLIk"
+    },
+    {
+      "start": 5,
+      "end": 9,
+      "quote": "Ein Lächeln kann Welten öffnen.",
+      "note": "Kleine Geste mit großer Wirkung",
+      "tags": ["Lächeln", "Geste", "Verbindung"],
+      "sourceVideoID": "BXdP4nzU1-U"
+    },
+    {
+      "start": 3,
+      "end": 8,
+      "quote": "Philosophen sagen: Glück ist ein Zustand der Seele.",
+      "note": "Philosophische Perspektive",
+      "tags": ["Philosophie", "Seele", "Zustand"],
+      "sourceVideoID": "zUdaPw7ZMog"
+    },
+    {
+      "start": 28,
+      "end": 32,
+      "quote": "Das Herz schlägt schneller, wenn wir verbunden sind.",
+      "note": "Verbindung zu anderen Menschen",
+      "tags": ["Verbindung", "Emotion", "Körper"],
+      "sourceVideoID": "fEFXthnmLIk"
+    },
+    {
+      "start": 22,
+      "end": 28,
+      "quote": "Glück heißt nicht, immer fröhlich zu sein – sondern im Schatten das Licht zu sehen.",
+      "note": "Reflexion über Glück & Leiden",
+      "tags": ["Licht", "Schatten", "Balance"],
+      "sourceVideoID": "BXdP4nzU1-U"
+    },
+    {
+      "start": 34,
+      "end": 40,
+      "quote": "Ich suchte das Glück draußen, fand es drinnen.",
+      "note": "Innere Reise / Selbstfindung",
+      "tags": ["Selbst", "Innenwelt", "Erkenntnis"],
+      "sourceVideoID": "fEFXthnmLIk"
+    },
+    {
+      "start": 95,
+      "end": 100,
+      "quote": "Wir sind verbunden durch unsichtbare Fäden.",
+      "note": "Verbindung über Worte hinaus",
+      "tags": ["Verbindung", "Unsichtbar", "Fäden"],
+      "sourceVideoID": "zUdaPw7ZMog"
+    },
+    {
+      "start": 16,
+      "end": 20,
+      "quote": "Ich fühlte mich leicht, als ich losließ.",
+      "note": "Loslassen & Erleichterung",
+      "tags": ["Loslassen", "Freiheit", "Leichtigkeit"],
+      "sourceVideoID": "BXdP4nzU1-U"
+    },
+    {
+      "start": 67,
+      "end": 71,
+      "quote": "Glück kann man nähren wie eine Pflanze.",
+      "note": "Metapher & Pflege",
+      "tags": ["Pflege", "Wachstum", "Garten"],
+      "sourceVideoID": "fEFXthnmLIk"
+    },
+    {
+      "start": 28,
+      "end": 32,
+      "quote": "Wenn du hörst, wie dein Herz lacht, bist du nahe am Glück.",
+      "note": "Metaphorische Beschreibung",
+      "tags": ["Herz", "Lachen", "Nähe"],
+      "sourceVideoID": "zUdaPw7ZMog"
+    },
+    {
+      "start": 0,
+      "end": 5,
+      "quote": "Glück ist kein Ziel, sondern ein Weg.",
+      "note": "Einstieg – Definition von Glück",
+      "tags": ["Definition", "Lebensweg", "Weg"],
+      "sourceVideoID": "BXdP4nzU1-U"
+    },
+    {
+      "start": 73,
+      "end": 77,
+      "quote": "Wir verlernen oft, uns zu wundern.",
+      "note": "Staunen & Wunder",
+      "tags": ["Staunen", "Kindlichkeit", "Wunder"],
+      "sourceVideoID": "fEFXthnmLIk"
+    },
+    {
+      "start": 10,
+      "end": 15,
+      "quote": "Wir verstehen selten, was uns wirklich fehlt.",
+      "note": "Fehlwahrnehmung & Sehnsucht",
+      "tags": ["Sehnsucht", "Mangel", "Unklarheit"],
+      "sourceVideoID": "zUdaPw7ZMog"
+    },
+    {
+      "start": 26,
+      "end": 30,
+      "quote": "Und da war einfach … Frieden.",
+      "note": "Moment des Friedens",
+      "tags": ["Frieden", "Ruhe", "Stille"],
+      "sourceVideoID": "BXdP4nzU1-U"
+    },
+    {
+      "start": 20,
+      "end": 26,
+      "quote": "Wenn ich gebe, fühle ich mich reicher.",
+      "note": "Gebende Haltung & altruistisches Glück",
+      "tags": ["Geben", "Reichtum", "Herz"],
+      "sourceVideoID": "fEFXthnmLIk"
+    },
+    {
+      "start": 40,
+      "end": 44,
+      "quote": "Wir bauen unsere eigene Sonne im Innern.",
+      "note": "Metapher für inneres Licht",
+      "tags": ["Licht", "Innen", "Kraft"],
+      "sourceVideoID": "zUdaPw7ZMog"
+    },
+    {
+      "start": 44,
+      "end": 48,
+      "quote": "Ich war dankbar für jeden Atemzug.",
+      "note": "Dankbarkeit & Präsenz",
+      "tags": ["Dankbarkeit", "Präsenz", "Leben"],
+      "sourceVideoID": "BXdP4nzU1-U"
+    },
+    {
+      "start": 54,
+      "end": 58,
+      "quote": "Ich erkannte: Ich bin genug.",
+      "note": "Selbstwert & Akzeptanz",
+      "tags": ["Selbstwert", "Erkenntnis", "Würde"],
+      "sourceVideoID": "fEFXthnmLIk"
+    },
+    {
+      "start": 38,
+      "end": 42,
+      "quote": "Das Herz flüstert, nicht schreit.",
+      "note": "Leise Zeichen des Glücks",
+      "tags": ["Herz", "Intuition", "Stille"],
+      "sourceVideoID": "BXdP4nzU1-U"
+    },
+    {
+      "start": 60,
+      "end": 65,
+      "quote": "Wenn du dein Licht scheust, wirst du verblassen.",
+      "note": "Mut & Sichtbarkeit",
+      "tags": ["Mut", "Selbstvertrauen", "Licht"],
+      "sourceVideoID": "fEFXthnmLIk"
+    },
+    {
+      "start": 34,
+      "end": 38,
+      "quote": "Manchmal reicht es, einfach zu atmen.",
+      "note": "Achtsamkeit & Gegenwart",
+      "tags": ["Atmung", "Achtsamkeit", "Sein"],
+      "sourceVideoID": "zUdaPw7ZMog"
+    },
+    {
+      "start": 13,
+      "end": 18,
+      "quote": "Freundschaft ist oft das, was uns trägt.",
+      "note": "Soziale Beziehungen als Glücksfaktor",
+      "tags": ["Freundschaft", "Tragkraft", "Bindung"],
+      "sourceVideoID": "fEFXthnmLIk"
+    },
+    {
+      "start": 85,
+      "end": 89,
+      "quote": "Glück ist nicht perfekt – aber echt.",
+      "note": "Echtheit statt Perfektion",
+      "tags": ["Authentizität", "Echtheit", "Fehler"],
+      "sourceVideoID": "zUdaPw7ZMog"
+    }
+  ],
+  "output": {
+    "title": "Glück in vielen Facetten – Schnittplan",
+    "description": "Ein durchmischter, lebendiger Schnittplan für ein inspirierendes Video über Glück. Kurze Szenen aus drei YouTube-Videos, schnell geschnitten für hohe Dynamik.",
+    "tags": [
+      "Glück",
+      "Philosophie",
+      "Achtsamkeit",
+      "Gefühl",
+      "Minimalismus",
+      "Verbindung",
+      "Selbstwert",
+      "Metapher"
+    ],
+    "notes": "Szenen wurden bewusst durchmischt, um häufige Videowechsel zu ermöglichen. Ideal für einen schnellen, abwechslungsreichen Schnittstil im Stil von TikTok/YouTube Shorts/IG Reels."
+  }
+}
