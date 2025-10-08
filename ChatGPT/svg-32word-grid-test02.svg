@@ -1,0 +1,169 @@
+<!--
+  // svg-32word-grid.svg
+  Aufgabe: Illustration von 32 Begriffen als je 20 weiße Kreise (r=5mm) auf schwarzem Hintergrund.
+  Raster 8x4, Fläche 1600mm x 400mm, pro Begriff 100mm x 100mm.
+  Erzeugt am 2025-10-08 von ChatGPT v2
+-->
+<svg width="1600mm" height="400mm" viewBox="0 0 1600 400" xmlns="http://www.w3.org/2000/svg" version="1.1">
+  <rect width="1600" height="400" fill="black"/>
+
+  <!-- Einheitliches Muster: 20 Kreise pro Begriff -->
+  <defs>
+    <g id="pattern20circles" fill="white">
+      <circle cx="20" cy="20" r="5"/>
+      <circle cx="50" cy="20" r="5"/>
+      <circle cx="80" cy="20" r="5"/>
+      <circle cx="35" cy="50" r="5"/>
+      <circle cx="65" cy="50" r="5"/>
+      <circle cx="20" cy="80" r="5"/>
+      <circle cx="50" cy="80" r="5"/>
+      <circle cx="80" cy="80" r="5"/>
+      <circle cx="20" cy="110" r="5"/>
+      <circle cx="50" cy="110" r="5"/>
+      <circle cx="80" cy="110" r="5"/>
+      <circle cx="35" cy="140" r="5"/>
+      <circle cx="65" cy="140" r="5"/>
+      <circle cx="50" cy="170" r="5"/>
+      <circle cx="70" cy="170" r="5"/>
+      <circle cx="30" cy="170" r="5"/>
+      <circle cx="50" cy="200" r="5"/>
+      <circle cx="20" cy="200" r="5"/>
+      <circle cx="80" cy="200" r="5"/>
+      <circle cx="50" cy="230" r="5"/>
+    </g>
+  </defs>
+
+  <!-- Begriffe -->
+  <!-- Layout: 8 Spalten (x=0, 100, 200, ..., 700) und 4 Reihen (y=0, 100, 200, 300) -->
+  
+  <g id="Haus" transform="translate(0,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Hund" transform="translate(100,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Auto" transform="translate(200,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Fahrrad" transform="translate(300,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Baum" transform="translate(400,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Ampel" transform="translate(500,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Apfel" transform="translate(600,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Banane" transform="translate(700,0)">
+    <use href="#pattern20circles"/>
+  </g>
+
+  <g id="Zitrone" transform="translate(800,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Mann" transform="translate(900,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Frau" transform="translate(1000,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Blume" transform="translate(1100,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Sonne" transform="translate(1200,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Mond" transform="translate(1300,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Vogel" transform="translate(1400,0)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Fisch" transform="translate(1500,0)">
+    <use href="#pattern20circles"/>
+  </g>
+
+  <g id="Auto2" transform="translate(0,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Blatt" transform="translate(100,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Wolke" transform="translate(200,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Haus2" transform="translate(300,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Baum2" transform="translate(400,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Lampe" transform="translate(500,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Turm" transform="translate(600,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Boot" transform="translate(700,100)">
+    <use href="#pattern20circles"/>
+  </g>
+
+  <g id="Schiff" transform="translate(800,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Auto3" transform="translate(900,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Zug" transform="translate(1000,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Fahrrad2" transform="translate(1100,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Apfel2" transform="translate(1200,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Banane2" transform="translate(1300,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Zitrone2" transform="translate(1400,100)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Mann2" transform="translate(1500,100)">
+    <use href="#pattern20circles"/>
+  </g>
+
+  <g id="Frau2" transform="translate(0,200)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Baum3" transform="translate(100,200)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Blume2" transform="translate(200,200)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Sonne2" transform="translate(300,200)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Mond2" transform="translate(400,200)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Vogel2" transform="translate(500,200)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Fisch2" transform="translate(600,200)">
+    <use href="#pattern20circles"/>
+  </g>
+  <g id="Haus3" transform="translate(700,200)">
+    <use href="#pattern20circles"/>
+  </g>
+
+</svg>
+<!--
+  Ende der SVG
+  Erzeugt am 2025-10-08 von ChatGPT v2
+-->
+

@@ -1,0 +1,185 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1600mm"
+  height="1600mm"
+  viewBox="0 0 600 600"
+  style="background:black"
+>
+  <!-- Raster 6x6 Zellen je 100x100 -->
+  
+  <style>
+    text {
+      fill: white;
+      font-size: 8px;
+      font-family: sans-serif;
+    }
+  </style>
+
+  <!-- Platzhalter für die 32 Begriffe aus Liste 1 -->
+  <!-- Jeder Begriff hat eine Gruppe <g> mit id=Begriff -->
+  
+  <!-- Funktion für Position: x = (i % 6)*100, y = floor(i/6)*100 -->
+  
+  <!-- Begriffe Liste 1 -->
+  <g id="Haus" transform="translate(0,0)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Haus</text>
+  </g>
+  
+  <g id="Hund" transform="translate(100,0)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Hund</text>
+  </g>
+  
+  <g id="Auto" transform="translate(200,0)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Auto</text>
+  </g>
+  
+  <g id="Fahrrad" transform="translate(300,0)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Fahrrad</text>
+  </g>
+  
+  <g id="Baum" transform="translate(400,0)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Baum</text>
+  </g>
+  
+  <g id="Ampel" transform="translate(500,0)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Ampel</text>
+  </g>
+  
+  <g id="Apfel" transform="translate(0,100)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Apfel</text>
+  </g>
+  
+  <g id="Banane" transform="translate(100,100)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Banane</text>
+  </g>
+  
+  <g id="Zitrone" transform="translate(200,100)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Zitrone</text>
+  </g>
+  
+  <g id="Mann" transform="translate(300,100)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Mann</text>
+  </g>
+  
+  <g id="Frau" transform="translate(400,100)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Frau</text>
+  </g>
+  
+  <g id="Katze" transform="translate(500,100)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Katze</text>
+  </g>
+  
+  <g id="Blume" transform="translate(0,200)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Blume</text>
+  </g>
+  
+  <g id="Stern" transform="translate(100,200)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Stern</text>
+  </g>
+  
+  <g id="Herz" transform="translate(200,200)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Herz</text>
+  </g>
+  
+  <g id="Ball" transform="translate(300,200)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Ball</text>
+  </g>
+  
+  <g id="Bus" transform="translate(400,200)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Bus</text>
+  </g>
+  
+  <g id="Boot" transform="translate(500,200)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Boot</text>
+  </g>
+  
+  <g id="Zug" transform="translate(0,300)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Zug</text>
+  </g>
+  
+  <g id="Flugzeug" transform="translate(100,300)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Flugzeug</text>
+  </g>
+  
+  <g id="Buch" transform="translate(200,300)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Buch</text>
+  </g>
+  
+  <g id="Tasse" transform="translate(300,300)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Tasse</text>
+  </g>
+  
+  <g id="Telefon" transform="translate(400,300)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Telefon</text>
+  </g>
+  
+  <g id="Lampe" transform="translate(500,300)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Lampe</text>
+  </g>
+  
+  <g id="Sonne" transform="translate(0,400)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Sonne</text>
+  </g>
+  
+  <g id="Mond" transform="translate(100,400)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Mond</text>
+  </g>
+  
+  <g id="Wolke" transform="translate(200,400)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Wolke</text>
+  </g>
+  
+  <g id="Fisch" transform="translate(300,400)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Fisch</text>
+  </g>
+  
+  <g id="Stuhl" transform="translate(400,400)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Stuhl</text>
+  </g>
+  
+  <g id="Tisch" transform="translate(500,400)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Tisch</text>
+  </g>
+  
+  <g id="Bett" transform="translate(0,500)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Bett</text>
+  </g>
+  
+  <g id="Vogel" transform="translate(100,500)">
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <text x="50" y="95" text-anchor="middle">Vogel</text>
+  </g>
+
+</svg>
+

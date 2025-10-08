@@ -1,0 +1,92 @@
+<!--
+// svg-32word-grid-test.svg
+// Erstellt: 2025-10-08
+// Version: ChatGPT SVG v1.0
+// Aufgabe: 3 Begriffe aus Liste 1, je 20 weiße Kreise mit r=5mm in 100x100mm Rasterzellen, weiß auf schwarz, gruppiert mit id
+-->
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1600mm"
+  height="1600mm"
+  viewBox="0 0 600 600"
+  style="background:black"
+>
+
+  <!-- Haus -->
+  <g id="Haus" transform="translate(0,0)">
+    <!-- 20 Kreise in Haus-Form -->
+    <circle cx="50" cy="15" r="5" fill="white"/>
+    <circle cx="40" cy="30" r="5" fill="white"/>
+    <circle cx="60" cy="30" r="5" fill="white"/>
+    <circle cx="30" cy="45" r="5" fill="white"/>
+    <circle cx="70" cy="45" r="5" fill="white"/>
+    <circle cx="20" cy="60" r="5" fill="white"/>
+    <circle cx="80" cy="60" r="5" fill="white"/>
+    <circle cx="15" cy="75" r="5" fill="white"/>
+    <circle cx="85" cy="75" r="5" fill="white"/>
+    <circle cx="25" cy="90" r="5" fill="white"/>
+    <circle cx="75" cy="90" r="5" fill="white"/>
+    <circle cx="35" cy="90" r="5" fill="white"/>
+    <circle cx="65" cy="90" r="5" fill="white"/>
+    <circle cx="45" cy="90" r="5" fill="white"/>
+    <circle cx="55" cy="90" r="5" fill="white"/>
+    <circle cx="50" cy="75" r="5" fill="white"/>
+    <circle cx="50" cy="60" r="5" fill="white"/>
+    <circle cx="50" cy="45" r="5" fill="white"/>
+    <circle cx="45" cy="60" r="5" fill="white"/>
+    <circle cx="55" cy="60" r="5" fill="white"/>
+  </g>
+
+  <!-- Hund -->
+  <g id="Hund" transform="translate(100,0)">
+    <!-- 20 Kreise in Hund-Form -->
+    <circle cx="30" cy="20" r="5" fill="white"/>
+    <circle cx="70" cy="20" r="5" fill="white"/>
+    <circle cx="20" cy="40" r="5" fill="white"/>
+    <circle cx="80" cy="40" r="5" fill="white"/>
+    <circle cx="40" cy="40" r="5" fill="white"/>
+    <circle cx="60" cy="40" r="5" fill="white"/>
+    <circle cx="25" cy="60" r="5" fill="white"/>
+    <circle cx="75" cy="60" r="5" fill="white"/>
+    <circle cx="35" cy="60" r="5" fill="white"/>
+    <circle cx="65" cy="60" r="5" fill="white"/>
+    <circle cx="50" cy="60" r="5" fill="white"/>
+    <circle cx="50" cy="80" r="5" fill="white"/>
+    <circle cx="30" cy="80" r="5" fill="white"/>
+    <circle cx="70" cy="80" r="5" fill="white"/>
+    <circle cx="40" cy="90" r="5" fill="white"/>
+    <circle cx="60" cy="90" r="5" fill="white"/>
+    <circle cx="50" cy="100" r="5" fill="white"/>
+    <circle cx="20" cy="100" r="5" fill="white"/>
+    <circle cx="80" cy="100" r="5" fill="white"/>
+    <circle cx="50" cy="110" r="5" fill="white"/>
+  </g>
+
+  <!-- Auto -->
+  <g id="Auto" transform="translate(200,0)">
+    <!-- 20 Kreise in Auto-Form -->
+    <circle cx="20" cy="60" r="5" fill="white"/>
+    <circle cx="40" cy="40" r="5" fill="white"/>
+    <circle cx="60" cy="40" r="5" fill="white"/>
+    <circle cx="80" cy="60" r="5" fill="white"/>
+    <circle cx="30" cy="70" r="5" fill="white"/>
+    <circle cx="70" cy="70" r="5" fill="white"/>
+    <circle cx="30" cy="90" r="5" fill="white"/>
+    <circle cx="70" cy="90" r="5" fill="white"/>
+    <circle cx="50" cy="90" r="5" fill="white"/>
+    <circle cx="15" cy="75" r="5" fill="white"/>
+    <circle cx="85" cy="75" r="5" fill="white"/>
+    <circle cx="50" cy="75" r="5" fill="white"/>
+    <circle cx="25" cy="50" r="5" fill="white"/>
+    <circle cx="75" cy="50" r="5" fill="white"/>
+    <circle cx="50" cy="50" r="5" fill="white"/>
+    <circle cx="35" cy="80" r="5" fill="white"/>
+    <circle cx="65" cy="80" r="5" fill="white"/>
+    <circle cx="40" cy="100" r="5" fill="white"/>
+    <circle cx="60" cy="100" r="5" fill="white"/>
+    <circle cx="50" cy="110" r="5" fill="white"/>
+  </g>
+
+</svg>
+
