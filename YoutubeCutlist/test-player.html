@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Video.js YouTube Test</title>
+  <link href="libs/video-js.min.css" rel="stylesheet" />
+</head>
+<body>
+  <h1>🎬 Video.js YouTube Test</h1>
+
+  <video
+    id="ytplayer"
+    class="video-js vjs-default-skin"
+    controls
+    width="800"
+    height="450"
+  ></video>
+
+  <script src="libs/video.min.js"></script>
+  <script src="libs/Youtube.min.js"></script>
+  <script>
+    let player = null;
+
+    function initPlayer(videoId, startSeconds = 0) {
+      // Zerstöre alten Player, falls vorhanden
+      if (player) {
+        player.dispose();
+        document.getElementById("ytplayer").innerHTML = "";
+        player = null;
+      }
+
+      // Optionen mit korrektem sources und ytControls
+      const options = {
+        techOrder: ["youtube"],
+        controls: true,
+        autoplay: false,
+        preload: "auto",
+        sources: [
+          {
+            type: "video/youtube",
+            src: `https://www.youtube.com/watch?v=${videoId}&start=${startSeconds}`
+          }
+        ],
+        youtube: {
+          modestbranding: 1,
+          rel: 0
+        },
+        // **Wichtig:** damit youtube-Plugin eigene Controls nicht ausblendet
+        ytControls: true
+      };
+
+      console.log("Init mit Optionen:", options);
+
+      player = videojs("ytplayer", options);
+
+      player.ready(() => {
+        console.log("Player ready, spiele ab...");
+        player.play();
+      });
+    }
+
+    // Beispielaufruf
+    initPlayer("y8HoSXAR_LY", 10);
+  </script>
+</body>
+</html>
+
