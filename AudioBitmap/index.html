@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Akustische Bitmap-Übertragung (Demo)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2em;
+      background: #f8f8f8;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      image-rendering: pixelated;
+      width: 512px;
+      height: 512px;
+    }
+    details {
+      margin-bottom: 1.5em;
+      background: #fff;
+      padding: 1em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    summary {
+      font-weight: bold;
+      font-size: 1.1em;
+      cursor: pointer;
+    }
+    .toolbar {
+      margin: 0.5em 0;
+    }
+    .toolbar button {
+      margin-right: 10px;
+    }
+    #debugLog {
+      font-family: monospace;
+      white-space: pre-wrap;
+      background: #eee;
+      padding: 0.5em;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+
+<!-- SETTINGS -->
+<details open>
+  <summary>⚙️ Einstellungen</summary>
+  <textarea id="settingsEditor" rows="12" style="width: 100%; font-family: monospace;"></textarea>
+  <br>
+  <button onclick="applySettings()">🔁 Update Einstellungen</button>
+  <div id="settingsStatus" style="margin-top: 0.5em; font-weight: bold;"></div>
+</details>
+
+<!-- SENDER & EMPFÄNGER UI -->
+<details open>
+  <summary>📤 Sender & Empfänger</summary>
+  <canvas id="canvasSender" width="512" height="512"></canvas>
+  <canvas id="canvasReceiver" width="512" height="512"></canvas>
+  <div id="senderStatus">Sender: Bereit</div>
+  <div id="receiverStatus">Empfänger: Inaktiv</div>
+
+  <div class="toolbar">
+    <input type="file" id="upload" accept="image/*">
+    <button onclick="startTransmission()">▶️ Senden</button>
+    <button onclick="stopTransmission()">⏹️ Stopp</button>
+    <button onclick="resetTransmission()">🔄 Zurücksetzen</button>
+  </div>
+  <div class="toolbar">
+    <button onclick="sendByte(0xFF)">Sende 0xFF</button>
+    <button onclick="sendByte(0x00)">Sende 0x00</button>
+    <button onclick="sendByte(0xAB)">Sende 0xAB</button>
+    <input type="text" id="customByteInput" placeholder="Hex z. B. AB" size="6">
+    <button onclick="sendCustomByte()">Sende eigenes Byte</button>
+  </div>
+  <div class="toolbar">
+    <button onclick="startReceiver(false)">🎧 Empfang (intern)</button>
+    <button onclick="startReceiver(true)">🎙️ Empfang (Mikrofon)</button>
+    <button onclick="stopReceiver()">⏹️ Stopp</button>
+    <button onclick="resetReceiver()">🔄 Zurücksetzen</button>
+  </div>
+</details>
+
+<!-- DEBUG / SPEKTRUM -->
+<details>
+  <summary>🛠 Debug / Spektrum</summary>
+  <div id="debugLog"></div>
+  <canvas id="receiverSpectrum" width="512" height="100" style="border:1px solid #ccc;"></canvas>
+</details>
+
+<script>
+/** === Einstellungen & Globals === **/
+const settings = {
+  canvasSize: 128,
+  numFrequencies: 16,
+  numTones: 4,
+  baseFreq: 500,
+  freqStep: 150,
+  symbolDuration: 300, // in ms
+  gain: 0.3,
+  showCursor: true,
+  debug: true
+};
+
+const settingsEditor = document.getElementById("settingsEditor");
+const settingsStatus = document.getElementById("settingsStatus");
+
+function refreshSettingsEditor() {
+  settingsEditor.value = JSON.stringify(settings, null, 2);
+}
+refreshSettingsEditor();
+
+/** Audio / Analyse Setup **/
+let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let gainNode = audioCtx.createGain();
+gainNode.gain.value = settings.gain;
+gainNode.connect(audioCtx.destination);
+
+let sharedAnalyser = audioCtx.createAnalyser();
+sharedAnalyser.fftSize = 2048;
+let sharedFreqData = new Float32Array(sharedAnalyser.frequencyBinCount);
+
+// Für internen Loopback (Sender → Empfänger intern)
+let mediaStreamDest = audioCtx.createMediaStreamDestination();
+// Quelle, die den internen Stream erzeugt
+let mediaStreamSource = audioCtx.createMediaStreamSource(mediaStreamDest.stream);
+
+/** Canvas-Kontexte **/
+let ctxSender, ctxReceiver;
+
+window.onload = () => {
+  ctxSender = document.getElementById("canvasSender").getContext("2d");
+  ctxReceiver = document.getElementById("canvasReceiver").getContext("2d");
+  clearCanvas(ctxSender);
+  clearCanvas(ctxReceiver);
+  log("🟢 System bereit");
+};
+
+/** Logging **/
+function log(msg) {
+  if (settings.debug) {
+    const logElem = document.getElementById("debugLog");
+    logElem.textContent += msg + "\n";
+    logElem.scrollTop = logElem.scrollHeight;
+  }
+  console.log("LOG:", msg);
+}
+
+/** Settings anwenden **/
+async function applySettings() {
+  try {
+    const updated = JSON.parse(settingsEditor.value);
+    Object.assign(settings, updated);
+
+    stopTransmission();
+    stopReceiver();
+
+    if (audioCtx && audioCtx.state !== "closed") {
+      await audioCtx.close();
+    }
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Rebuild audio graph
+    gainNode = audioCtx.createGain();
+    gainNode.gain.value = settings.gain;
+    gainNode.connect(audioCtx.destination);
+
+    sharedAnalyser = audioCtx.createAnalyser();
+    sharedAnalyser.fftSize = 2048;
+    sharedFreqData = new Float32Array(sharedAnalyser.frequencyBinCount);
+
+    // Neuer mediaStreamDest / Source
+    mediaStreamDest = audioCtx.createMediaStreamDestination();
+    mediaStreamSource = audioCtx.createMediaStreamSource(mediaStreamDest.stream);
+
+    resetTransmission();
+    resetReceiver();
+
+    refreshSettingsEditor();
+    settingsStatus.textContent = "✅ Einstellungen übernommen & System neu initialisiert.";
+    settingsStatus.style.color = "green";
+    log("⚙️ Einstellungen aktualisiert");
+
+  } catch (err) {
+    settingsStatus.textContent = "❌ Ungültiges JSON!";
+    settingsStatus.style.color = "red";
+    log("Fehler beim Einlesen der Einstellungen: " + err);
+  }
+}
+
+/** Bitmap / Sender Logik **/
+let bitmapBytes = new Uint8Array((settings.canvasSize ** 2) / 8);
+let currentByteIndex = 0;
+let transmissionRunning = false;
+
+document.getElementById("upload").addEventListener("change", handleImageUpload);
+
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    const temp = document.createElement("canvas");
+    temp.width = settings.canvasSize;
+    temp.height = settings.canvasSize;
+    const tctx = temp.getContext("2d");
+    tctx.drawImage(img, 0, 0, settings.canvasSize, settings.canvasSize);
+    const imgData = tctx.getImageData(0, 0, settings.canvasSize, settings.canvasSize).data;
+
+    bitmapBytes = new Uint8Array((settings.canvasSize ** 2) / 8);
+    for (let y = 0; y < settings.canvasSize; y++) {
+      for (let x = 0; x < settings.canvasSize; x++) {
+        const idx = (y * settings.canvasSize + x);
+        const i = idx * 4;
+        const r = imgData[i], g = imgData[i+1], b = imgData[i+2];
+        const gray = (r + g + b) / 3;
+        const bit = gray < 128 ? 1 : 0;
+        const byteIndex = Math.floor(idx / 8);
+        const bitIndex = 7 - (idx % 8);
+        bitmapBytes[byteIndex] |= (bit << bitIndex);
+      }
+    }
+    drawBitmap(ctxSender, bitmapBytes, settings.canvasSize);
+    document.getElementById("senderStatus").textContent = "Sender: Bild geladen";
+    log("Bild konvertiert");
+  };
+  img.src = URL.createObjectURL(file);
+}
+
+function drawBitmap(ctx, bytes, size, cursorByte = -1) {
+  const imageData = ctx.createImageData(size, size);
+  for (let i = 0; i < size * size; i++) {
+    const byteIndex = Math.floor(i / 8);
+    const bitIndex = 7 - (i % 8);
+    const bit = (bytes[byteIndex] >> bitIndex) & 1;
+    const val = bit ? 0 : 255;
+    imageData.data[i*4 + 0] = val;
+    imageData.data[i*4 + 1] = val;
+    imageData.data[i*4 + 2] = val;
+    imageData.data[i*4 + 3] = 255;
+  }
+  ctx.putImageData(imageData, 0, 0);
+
+  if (settings.showCursor && cursorByte >= 0) {
+    const pxIdx = cursorByte * 8;
+    const x = pxIdx % size;
+    const y = Math.floor(pxIdx / size);
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 1;
+    if (x + 8 <= size) {
+      ctx.strokeRect(x - 0.5, y - 0.5, 8, 1);
+    } else {
+      for (let i = 0; i < 8; i++) {
+        const px = (x + i) % size;
+        const py = y + Math.floor((x + i) / size);
+        ctx.strokeRect(px - 0.5, py - 0.5, 1, 1);
+      }
+    }
+  }
+}
+
+function startTransmission() {
+  if (transmissionRunning || bitmapBytes.length === 0) return;
+  transmissionRunning = true;
+  document.getElementById("senderStatus").textContent = "Sender: Sende...";
+  (async () => {
+    for (let i = 0; i < bitmapBytes.length; i++) {
+      if (!transmissionRunning) break;
+      const byte = bitmapBytes[i];
+      const freqs = encodeByteToFrequencies(byte);
+      playLiveFrequencies(freqs, settings.symbolDuration);
+      drawBitmap(ctxSender, bitmapBytes, settings.canvasSize, i);
+      const pct = ((i+1)/bitmapBytes.length * 100).toFixed(1);
+      document.getElementById("senderStatus").textContent =
+        `Sender: Byte ${i+1}/${bitmapBytes.length} (${pct}%)`;
+      await new Promise(r => setTimeout(r, settings.symbolDuration));
+    }
+    transmissionRunning = false;
+    document.getElementById("senderStatus").textContent = "Sender: Fertig";
+    log("Übertragung abgeschlossen");
+  })();
+}
+
+function stopTransmission() {
+  transmissionRunning = false;
+  document.getElementById("senderStatus").textContent = "Sender: Gestoppt";
+  log("Senden gestoppt");
+}
+
+function resetTransmission() {
+  currentByteIndex = 0;
+  drawBitmap(ctxSender, bitmapBytes, settings.canvasSize);
+  document.getElementById("senderStatus").textContent = "Sender: Zurückgesetzt";
+}
+
+/** Erzeuge Töne, verbinde mit Analyser & StreamDestination **/
+function playLiveFrequencies(frequencies, durationMs) {
+  const now = audioCtx.currentTime;
+  const durationSec = durationMs / 1000;
+
+  frequencies.forEach(freq => {
+    const osc = audioCtx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+
+    const fade = audioCtx.createGain();
+    fade.gain.setValueAtTime(0, now);
+    fade.gain.linearRampToValueAtTime(settings.gain, now + 0.01);
+    fade.gain.setValueAtTime(settings.gain, now + durationSec - 0.02);
+    fade.gain.linearRampToValueAtTime(0, now + durationSec);
+
+    osc.connect(fade);
+    fade.connect(gainNode);
+    fade.connect(sharedAnalyser);
+    fade.connect(mediaStreamDest);
+
+    osc.start(now);
+    osc.stop(now + durationSec);
+  });
+}
+function sendCustomByte() {
+  const hex = document.getElementById("customByteInput").value.trim();
+  if (!/^[0-9a-fA-F]{1,2}$/.test(hex)) {
+    log("❌ Ungültiges Hex-Byte");
+    return;
+  }
+  const byte = parseInt(hex, 16);
+  sendByte(byte);
+}
+
+
+function sendByte(byte) {
+  const freqs = encodeByteToFrequencies(byte);
+  playLiveFrequencies(freqs, settings.symbolDuration);
+  log("🔊 Einzel-Byte gesendet: 0x" + byte.toString(16).padStart(2, '0'));
+}
+
+
+
+/** Empfang / Dekodierung **/
+let recvRunning = false;
+let receiveBitmapBytes;
+let receiveBytePos = 0;
+let startDetected = false;
+
+async function startReceiver(useMic = false) {
+  if (recvRunning) return;
+
+  if (useMic) {
+    try {
+      const audioStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          sampleRate: 44100,
+          channelCount: 1,
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        }
+      });
+      const src = audioCtx.createMediaStreamSource(audioStream);
+      src.connect(sharedAnalyser);
+      log("📡 Mikrofonquelle verbunden");
+    } catch (err) {
+      log("❌ Mikrofonzugriff fehlgeschlagen: " + err.message);
+      document.getElementById("receiverStatus").textContent = "Empfänger: Mikrofonfehler";
+      return;
+    }
+  }
+
+  recvRunning = true;
+  startDetected = false;
+  receiveBytePos = 0;
+  drawSpectrum();
+  receiveBitmapBytes = new Uint8Array((settings.canvasSize ** 2) / 8);
+  clearCanvas(ctxReceiver);
+  document.getElementById("receiverStatus").textContent = "Empfänger: Warte";
+
+  receptionLoop();
+}
+
+function drawSpectrum() {
+  if (!recvRunning) return;
+
+  const freq = new Uint8Array(sharedAnalyser.frequencyBinCount);
+  sharedAnalyser.getByteFrequencyData(freq);
+
+  const canvas = document.getElementById("receiverSpectrum");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const barW = canvas.width / freq.length;
+  for (let i = 0; i < freq.length; i++) {
+    const v = freq[i];
+    ctx.fillStyle = `rgb(${v},${v},${v})`;
+    ctx.fillRect(i * barW, canvas.height - v, barW, v);
+  }
+
+  if (recvRunning) {
+    requestAnimationFrame(drawSpectrum);
+  }
+}
+
+async function receptionLoop() {
+  const symbolMs = settings.symbolDuration;
+
+  while (recvRunning) {
+    await new Promise(r => setTimeout(r, symbolMs));
+
+    sharedAnalyser.getFloatFrequencyData(sharedFreqData);
+    const detected = detectFrequencies(sharedFreqData, audioCtx.sampleRate, sharedAnalyser.fftSize);
+
+    log("Empf: detektiert Frequenzen (raw): " + detected.map(f => f.toFixed(1)).join(", "));
+
+    if (!startDetected) {
+      if (isStartSymbol(detected)) {
+        startDetected = true;
+        document.getElementById("receiverStatus").textContent = "Empfänger: Start erkannt";
+        log("🟢 Start erkannt");
+      }
+      continue;
+    }
+
+    if (isStopSymbol(detected)) {
+      document.getElementById("receiverStatus").textContent = "Empfänger: Stop erkannt";
+      log("🔴 Stop erkannt");
+      recvRunning = false;
+      break;
+    }
+
+    if (detected.length !== settings.numTones) {
+      log("⚠️ Falsche Anzahl Töne: " + detected.length);
+      continue;
+    }
+
+    const byte = decodeFrequenciesToByte(detected);
+    if (byte == null) {
+      log("⚠️ Byte nicht dekodierbar");
+      continue;
+    }
+
+    log("✅ Byte: 0x" + byte.toString(16).padStart(2, "0"));
+
+    receiveBitmapBytes[receiveBytePos] = byte;
+    receiveBytePos++;
+
+    drawBitmap(ctxReceiver, receiveBitmapBytes, settings.canvasSize);
+    document.getElementById("receiverStatus").textContent =
+      `Empfänger: Byte ${receiveBytePos}/${receiveBitmapBytes.length}`;
+
+    if (receiveBytePos >= receiveBitmapBytes.length) {
+      recvRunning = false;
+      document.getElementById("receiverStatus").textContent = "Empfänger: Fertig";
+      log("✅ Empfang komplett");
+      break;
+    }
+  }
+}
+
+function stopReceiver() {
+  recvRunning = false;
+  document.getElementById("receiverStatus").textContent = "Empfänger: Stopp";
+  log("Empfänger gestoppt");
+}
+
+function resetReceiver() {
+  recvRunning = false;
+  clearCanvas(ctxReceiver);
+  receiveBitmapBytes = null;
+  receiveBytePos = 0;
+  document.getElementById("receiverStatus").textContent = "Empfänger: Zurückgesetzt";
+  log("Empfänger zurückgesetzt");
+}
+
+/** Frequenzkodierung & Dekodierung **/
+function encodeByteToFrequencies(byte) {
+  const freqs = [];
+  for (let i = 0; i < settings.numTones; i++) {
+    const part = (byte >> (i * 2)) & 0b11;
+    const index = i * 4 + part;
+    freqs.push(settings.baseFreq + index * settings.freqStep);
+  }
+  return freqs;
+}
+
+function detectFrequencies(freqData, sampleRate, fftSize) {
+  const candidates = [];
+  const thresholdPerFreq = {
+    500: -82, 650: -82, 800: -83, 950: -83,
+    1100: -84, 1250: -85, 1400: -86, 1550: -87,
+    1700: -88, 1850: -88, 2000: -89, 2150: -89,
+    2300: -90, 2450: -90, 2600: -91
+  };
+
+  for (let i = 0; i < settings.numFrequencies; i++) {
+    const freq = settings.baseFreq + i * settings.freqStep;
+    const bin = Math.round(freq / sampleRate * fftSize);
+    const mag = freqData[bin];
+    const thr = thresholdPerFreq[freq] ?? -90;
+    if (mag > thr) {
+      candidates.push({ freq, magnitude: mag });
+    }
+  }
+
+  candidates.sort((a,b) => b.magnitude - a.magnitude);
+  const strongest = candidates.slice(0, settings.numTones);
+  return strongest.map(c => c.freq);
+}
+
+function isStartSymbol(freqs) {
+  const start = encodeByteToFrequencies(0xFF);
+  return arraysEqualUnordered(freqs, start);
+}
+function isStopSymbol(freqs) {
+  return false;
+  //const stop = encodeByteToFrequencies(0x100);
+  //return arraysEqualUnordered(freqs, stop);
+}
+
+function decodeFrequenciesToByte(freqs) {
+  if (!Array.isArray(freqs) || freqs.length !== settings.numTones) return null;
+  let byte = 0;
+  for (let i = 0; i < freqs.length; i++) {
+    const freq = freqs[i];
+    const rel = freq - settings.baseFreq;
+    const idx = Math.round(rel / settings.freqStep);
+    if (idx < 0 || idx >= settings.numFrequencies) return null;
+    const block = Math.floor(idx / 4);
+    const value = idx % 4;
+    if (block < 0 || block >= settings.numTones) return null;
+    byte |= (value << (block * 2));
+  }
+  return byte;
+}
+
+function arraysEqualUnordered(a, b) {
+  if (a.length !== b.length) return false;
+  const sa = a.slice().sort();
+  const sb = b.slice().sort();
+  return sa.every((v,i) => v === sb[i]);
+}
+function clearCanvas(ctx) {
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
+
+</script>
+</body>
+</html>
+
