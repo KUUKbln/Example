@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>TextChangeLog</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 1000px; margin: auto; }
+    textarea, pre { width: 100%; height: 200px; font-family: monospace; }
+    button { margin: 10px 5px 10px 0; }
+    #reconstructed { white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; background: #f9f9f9; }
+    summary { cursor: pointer; font-weight: bold; margin-top: 1em; }
+  </style>
+</head>
+<body>
+
+  <h2>📝 TextChangeLog (mit echten `\\n` Deltas)</h2>
+
+  <div>
+    <label><strong>Editor:</strong></label><br>
+    <textarea id="editor" placeholder="Hier schreiben..."></textarea>
+    <button onclick="resetEditor()">Reset</button>
+  </div>
+
+  <details open>
+    <summary>✏️ Delta-Log (editierbar)</summary>
+    <textarea id="deltaLog" placeholder="Delta-Befehle hier..."></textarea>
+  </details>
+
+  <div style="margin-top: 20px;">
+    <button onclick="stepReplay()">➕ Nächster Schritt</button>
+    <button onclick="replayAll()">▶️ Alles wiederherstellen</button>
+    <span id="currentLineInfo"></span>
+  </div>
+
+  <div>
+    <h3>📄 Wiederhergestellter Text</h3>
+    <pre id="reconstructed"></pre>
+  </div>
+
+<script>
+  const editor = document.getElementById("editor");
+  const deltaLogField = document.getElementById("deltaLog");
+  const reconstructed = document.getElementById("reconstructed");
+  const currentLineInfo = document.getElementById("currentLineInfo");
+
+  let lastValue = "";
+  let stepIndex = 0;
+
+  editor.addEventListener("input", () => {
+    const newValue = editor.value;
+    const selectionStart = editor.selectionStart;
+    const deltaLines = computeDeltas(lastValue, newValue, selectionStart);
+    if (deltaLines.length > 0) {
+      deltaLogField.value += deltaLines.join("\n") + "\n";
+      lastValue = newValue;
+    }
+  });
+
+  function computeDeltas(oldText, newText, cursorPos) {
+    let deltas = [];
+
+    if (oldText === newText) return [];
+
+    let prefixLength = 0;
+    while (
+      prefixLength < oldText.length &&
+      prefixLength < newText.length &&
+      oldText[prefixLength] === newText[prefixLength]
+    ) {
+      prefixLength++;
+    }
+
+    let suffixLength = 0;
+    while (
+      suffixLength + prefixLength < oldText.length &&
+      suffixLength + prefixLength < newText.length &&
+      oldText[oldText.length - 1 - suffixLength] === newText[newText.length - 1 - suffixLength]
+    ) {
+      suffixLength++;
+    }
+
+    const removed = oldText.slice(prefixLength, oldText.length - suffixLength);
+    const inserted = newText.slice(prefixLength, newText.length - suffixLength);
+
+    if (removed.length > 0) {
+      deltas.push(`<${prefixLength}:<${removed.length}`);
+    }
+    if (inserted.length > 0) {
+      // escape real newline
+      const safeInsert = inserted.replace(/\n/g, "\\n");
+      deltas.push(`>${prefixLength}:${safeInsert}`);
+    }
+
+    return deltas;
+  }
+
+  function resetEditor() {
+    editor.value = "";
+    deltaLogField.value = "";
+    reconstructed.textContent = "";
+    currentLineInfo.textContent = "";
+    lastValue = "";
+    stepIndex = 0;
+  }
+
+  function stepReplay() {
+    const lines = deltaLogField.value.split("\n");
+    if (stepIndex >= lines.length) return;
+
+    let output = reconstructed.textContent.replace(/^\/\/.*\n/, "");
+    const line = lines[stepIndex];
+
+    output = applyDelta(output, line);
+    reconstructed.textContent = `// Zeile ${stepIndex + 1}: ${line}\n` + output;
+    currentLineInfo.textContent = `Delta ${stepIndex + 1}/${lines.length}`;
+    stepIndex++;
+  }
+
+  function replayAll() {
+    stepIndex = 0;
+    reconstructed.textContent = "";
+    const lines = deltaLogField.value.split("\n");
+    let output = "";
+
+    for (let i = 0; i < lines.length; i++) {
+      output = applyDelta(output, lines[i]);
+    }
+
+    reconstructed.textContent = output;
+    currentLineInfo.textContent = `Alle ${lines.length} Zeilen verarbeitet.`;
+  }
+
+  function applyDelta(text, line) {
+    const insert = line.match(/^>(\d+):([\s\S]*)$/);
+    const remove = line.match(/^<(\d+):<(\d+)$/);
+
+    if (insert) {
+      const pos = parseInt(insert[1]);
+      const str = insert[2].replace(/\\n/g, "\n"); // echte \n wiederherstellen
+      return text.slice(0, pos) + str + text.slice(pos);
+    }
+
+    if (remove) {
+      const pos = parseInt(remove[1]);
+      const len = parseInt(remove[2]);
+      return text.slice(0, pos) + text.slice(pos + len);
+    }
+
+    return text;
+  }
+</script>
+
+</body>
+</html>
+
