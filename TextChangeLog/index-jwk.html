@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JWK Import & Export Demo</title>
+<style>
+  body { font-family: monospace; margin: 1em; }
+  textarea { width: 100%; height: 6em; font-family: monospace; }
+  button { margin-top: 0.5em; }
+  label { display: block; margin-top: 1em; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h2>JWK Import / Export</h2>
+
+<label for="jwkImport">JWK (JSON) zum Importieren (Privat oder Public):</label>
+<textarea id="jwkImport" placeholder='{"kty":"EC", ...}'></textarea>
+<button onclick="importJWK()">JWK Importieren</button>
+
+<label>Aktueller Key Status:</label>
+<div id="keyStatus">Kein Key geladen</div>
+
+<button onclick="exportJWK()">JWK Exportieren (Privat & Öffentlich)</button>
+
+<label for="exportOutput">Exportierte Schlüssel (JSON):</label>
+<textarea id="exportOutput" readonly></textarea>
+
+<script>
+let keyPair = null;
+
+async function importJWK() {
+  const input = document.getElementById('jwkImport').value.trim();
+  if (!input) {
+    alert("Bitte JWK JSON eingeben");
+    return;
+  }
+
+  try {
+    const jwk = JSON.parse(input);
+
+    if ('d' in jwk) {
+      // Privater Schlüssel
+      keyPair = {};
+      keyPair.privateKey = await crypto.subtle.importKey(
+        "jwk",
+        jwk,
+        { name: "ECDSA", namedCurve: "P-256" },
+        true,
+        ["sign"]
+      );
+      // Public Key aus privatem extrahieren
+      const pubJWK = { ...jwk };
+      delete pubJWK.d;
+      keyPair.publicKey = await crypto.subtle.importKey(
+        "jwk",
+        pubJWK,
+        { name: "ECDSA", namedCurve: "P-256" },
+        true,
+        ["verify"]
+      );
+      document.getElementById('keyStatus').textContent = "Privater Schlüssel importiert.";
+    } else {
+      // Nur öffentlicher Schlüssel
+      keyPair = { publicKey: null, privateKey: null };
+      keyPair.publicKey = await crypto.subtle.importKey(
+        "jwk",
+        jwk,
+        { name: "ECDSA", namedCurve: "P-256" },
+        true,
+        ["verify"]
+      );
+      document.getElementById('keyStatus').textContent = "Nur öffentlicher Schlüssel importiert.";
+    }
+  } catch (e) {
+    alert("Ungültiges JWK JSON oder Fehler beim Import: " + e.message);
+  }
+}
+
+async function exportJWK() {
+  if (!keyPair) {
+    alert("Kein Schlüssel zum Exportieren vorhanden.");
+    return;
+  }
+
+  let priv = null;
+  let pub = null;
+
+  try {
+    if (keyPair.privateKey) {
+      priv = await crypto.subtle.exportKey("jwk", keyPair.privateKey);
+    }
+    if (keyPair.publicKey) {
+      pub = await crypto.subtle.exportKey("jwk", keyPair.publicKey);
+    }
+  } catch (e) {
+    alert("Fehler beim Exportieren der Schlüssel: " + e.message);
+    return;
+  }
+
+  const exportObj = { privateKey: priv, publicKey: pub };
+  document.getElementById('exportOutput').value = JSON.stringify(exportObj, null, 2);
+}
+
+// --- Optional: Download-Funktion für Export
+function downloadJWK() {
+  if (!keyPair) {
+    alert("Kein Schlüssel zum Downloaden vorhanden.");
+    return;
+  }
+  exportJWK();
+  const data = document.getElementById('exportOutput').value;
+  const blob = new Blob([data], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const filename = `keys_export_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Button zum Download hinzufügen
+const btnDownload = document.createElement('button');
+btnDownload.textContent = "JWK als Datei herunterladen";
+btnDownload.onclick = downloadJWK;
+document.body.appendChild(btnDownload);
+
+</script>
+</body>
+</html>
+

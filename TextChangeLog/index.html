@@ -9,24 +9,28 @@
     button { margin: 10px 5px 10px 0; }
     #reconstructed { white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; background: #f9f9f9; }
     summary { cursor: pointer; font-weight: bold; margin-top: 1em; }
+    .section { margin-top: 30px; }
   </style>
 </head>
 <body>
 
-  <h2>📝 TextChangeLog (mit echten `\\n` Deltas)</h2>
+  <h2>📝 TextChangeLog (mit JWS-Signatur, Import/Export, Erklärung)</h2>
 
   <div>
     <label><strong>Editor:</strong></label><br>
     <textarea id="editor" placeholder="Hier schreiben..."></textarea>
     <button onclick="resetEditor()">Reset</button>
+    <button onclick="signText()">🖋 Signieren</button>
   </div>
 
   <details open>
     <summary>✏️ Delta-Log (editierbar)</summary>
     <textarea id="deltaLog" placeholder="Delta-Befehle hier..."></textarea>
+    <button onclick="downloadLog()">⬇️ Download Log (.txt)</button>
+    <input type="file" id="upload" accept=".txt" onchange="loadLogFromFile(event)">
   </details>
 
-  <div style="margin-top: 20px;">
+  <div class="section">
     <button onclick="stepReplay()">➕ Nächster Schritt</button>
     <button onclick="replayAll()">▶️ Alles wiederherstellen</button>
     <span id="currentLineInfo"></span>
@@ -45,7 +49,9 @@
 
   let lastValue = "";
   let stepIndex = 0;
+  let privateKey;
 
+  // ==== TEXT ÄNDERUNG TRACEN ====
   editor.addEventListener("input", () => {
     const newValue = editor.value;
     const selectionStart = editor.selectionStart;
@@ -86,7 +92,6 @@
       deltas.push(`<${prefixLength}:<${removed.length}`);
     }
     if (inserted.length > 0) {
-      // escape real newline
       const safeInsert = inserted.replace(/\n/g, "\\n");
       deltas.push(`>${prefixLength}:${safeInsert}`);
     }
@@ -109,6 +114,11 @@
 
     let output = reconstructed.textContent.replace(/^\/\/.*\n/, "");
     const line = lines[stepIndex];
+    
+    //validate signature
+    if (line.startsWith("# JWS:")) {
+      await verifyJWSLine(text, line);
+    }
 
     output = applyDelta(output, line);
     reconstructed.textContent = `// Zeile ${stepIndex + 1}: ${line}\n` + output;
@@ -123,6 +133,10 @@
     let output = "";
 
     for (let i = 0; i < lines.length; i++) {
+      //validate signature
+      if (line.startsWith("# JWS:")) {
+        await verifyJWSLine(text, line);
+      }
       output = applyDelta(output, lines[i]);
     }
 
@@ -136,7 +150,7 @@
 
     if (insert) {
       const pos = parseInt(insert[1]);
-      const str = insert[2].replace(/\\n/g, "\n"); // echte \n wiederherstellen
+      const str = insert[2].replace(/\\n/g, "\n");
       return text.slice(0, pos) + str + text.slice(pos);
     }
 
@@ -148,8 +162,291 @@
 
     return text;
   }
+
+  // === SIGNATUR ===
+
+  async function alt_signText() {
+    const fullText = reconstructed.textContent;
+    const textWithoutJWS = fullText.replace(/^# JWS:.*$/gm, "").trim();
+    const enc = new TextEncoder();
+    const data = enc.encode(textWithoutJWS);
+
+    if (!privateKey) {
+      privateKey = await window.crypto.subtle.generateKey(
+        { name: "ECDSA", namedCurve: "P-256" },
+        true,
+        ["sign", "verify"]
+      );
+    }
+
+    const signature = await crypto.subtle.sign(
+      { name: "ECDSA", hash: "SHA-256" },
+      privateKey,
+      data
+    );
+
+    const sigB64 = base64url(signature);
+
+    const sigLine = `# JWS: ${sigB64}`;
+    const deltaLine = `>${textWithoutJWS.length}:# JWS: ${sigB64}\\n`;
+
+
+
+    deltaLogField.value += deltaLine + "\n";
+    editor.value += `\n# JWS: ${sigB64}`;
+    lastValue = editor.value;
+  }
+
+  function alt_base64url(buffer) {
+    return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+<!--scriptteil 2-->
+  // === Download Delta-Log als Base64url-codierte Textdatei ===
+  function downloadLog() {
+    let filename = prompt("Dateiname für Delta-Log (ohne Endung):", `delta-log-${new Date().toISOString().slice(0,10)}`);
+    if (!filename) return;
+    let logText = deltaLogField.value.trim();
+
+    // Base64url kodieren
+    const utf8encoder = new TextEncoder();
+    const bytes = utf8encoder.encode(logText);
+    let b64 = btoa(String.fromCharCode(...bytes))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+    const blob = new Blob([b64], {type: "text/plain"});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename + ".txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // === Datei-Upload und Log laden ===
+  function loadLogFromFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      let b64 = e.target.result.trim();
+      try {
+        // Base64url -> Uint8Array -> Text
+        b64 = b64.replace(/-/g, "+").replace(/_/g, "/");
+        while (b64.length % 4) b64 += "=";
+        const str = atob(b64);
+        const bytes = new Uint8Array(str.length);
+        for(let i=0; i<str.length; i++) bytes[i] = str.charCodeAt(i);
+
+        const utf8decoder = new TextDecoder();
+        const text = utf8decoder.decode(bytes);
+
+        deltaLogField.value = text;
+        lastValue = "";
+        replayAll();
+      } catch {
+        alert("Fehler beim Decodieren der Datei");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // === Querystring auslesen ===
+  function loadLogFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const logB64 = params.get("log");
+    if (!logB64) return;
+
+    try {
+      let b64 = logB64.replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+      const str = atob(b64);
+      const bytes = new Uint8Array(str.length);
+      for(let i=0; i<str.length; i++) bytes[i] = str.charCodeAt(i);
+
+      const utf8decoder = new TextDecoder();
+      const text = utf8decoder.decode(bytes);
+
+      deltaLogField.value = text;
+      lastValue = "";
+      replayAll();
+    } catch {
+      console.warn("Kein gültiger Log im Querystring");
+    }
+  }
+
+  // === Erklärung Sektion anhängen ===
+  function appendProtocolExplanation() {
+    const explanation = document.createElement("details");
+    explanation.innerHTML = `
+      <summary>ℹ️ Delta-Protokoll Erklärung</summary>
+      <pre style="white-space: pre-wrap; background:#f0f0f0; padding: 10px; border: 1px solid #ccc; margin-top: 10px;">
+Die Deltas bestehen aus 2 Befehlsarten:
+
+  >POS:TEXT
+    Fügt ab Position POS den Text TEXT ein.
+    Beispiel: &gt;3:abc  ersetzt ab Position 3 mit "abc".
+    '\n' im Text wird als "\\n" gespeichert.
+
+  &lt;POS:&lt;LÄNGE
+    Löscht ab Position POS die Anzahl LÄNGE von Zeichen.
+    Beispiel: &lt;4:&lt;2 löscht 2 Zeichen ab Position 4.
+
+Alle Zeilen, die nicht mit &gt; oder &lt; beginnen, werden als Klartext (Kommentare) an das Dokument angehängt.
+
+Signaturen (JWS) werden als Kommentarzeile angehängt, z.B.:
+  # JWS: eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9...
+
+Der Log kann genutzt werden, um Schritt für Schritt oder vollständig den Text wiederherzustellen.
+
+    </pre>
+    `;
+    document.body.appendChild(explanation);
+  }
+
+  // === Init ===
+  window.onload = () => {
+    loadLogFromQuery();
+    appendProtocolExplanation();
+  };
 </script>
 
+<script>// Signature
+
+let keyPair = null;
+
+// Signatur ausführen und ins Dokument einfügen
+async function signText() {
+  const rawText = reconstructed.textContent;
+  const textWithoutJWS = rawText.replace(/^# JWS:.*$/gm, "").trim();
+
+  // Erzeuge Keypaar (einmalig – Demo!)
+  if (!keyPair) {
+    keyPair = await crypto.subtle.generateKey(
+      { name: "ECDSA", namedCurve: "P-256" },
+      true,
+      ["sign", "verify"]
+    );
+  }
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(textWithoutJWS);
+
+  // Signiere die Daten
+  const signature = await crypto.subtle.sign(
+    { name: "ECDSA", hash: { name: "SHA-256" } },
+    keyPair.privateKey,
+    data
+  );
+
+  const sigBase64url = base64url(signature);
+  const jwsLine = `# JWS: ${sigBase64url}`;
+  const jwsDelta = `>\\n${textWithoutJWS.length}:# JWS: ${sigBase64url}\\n`;
+  //const deltaLine = `>\\n${textWithoutJWS.length}:# JWS: ${sigBase64url}\\n`;
+
+  // In Text und Log einfügen
+  editor.value += `\n${jwsLine}\n`;
+  deltaLogField.value += jwsDelta + "\n";
+  lastValue = editor.value;
+
+  // Optional: Wiederhergestellten Text aktualisieren
+  replayAll();
+}
+
+// Hilfsfunktion: ArrayBuffer → base64url
+function base64url(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+async function importPrivateKey(jwk) {
+  return await crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "ECDSA", namedCurve: "P-256" },
+    true,
+    ["sign"]
+  );
+}
+
+async function importPublicKey(jwk) {
+  return await crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "ECDSA", namedCurve: "P-256" },
+    true,
+    ["verify"]
+  );
+}
+
+async function exportKeyPair() {
+  if (!keyPair) return;
+
+  const jwkPrivate = await crypto.subtle.exportKey("jwk", keyPair.privateKey);
+  const jwkPublic = await crypto.subtle.exportKey("jwk", keyPair.publicKey);
+
+  console.log("🔐 Private JWK:", jwkPrivate);
+  console.log("🔓 Public JWK:", jwkPublic);
+}
+
+async function verifyJWSLine(textSoFar, jwsLine) {
+  if (!keyPair || !keyPair.publicKey) {
+    alert("⚠️ Kein Public Key vorhanden für Verifikation.");
+    return false;
+  }
+
+  const match = jwsLine.match(/^# JWS:\s*(.+)$/);
+  if (!match) return false;
+
+  const sig = base64urlToBytes(match[1]);
+  const data = new TextEncoder().encode(textSoFar.trim());
+
+  const isValid = await crypto.subtle.verify(
+    { name: "ECDSA", hash: "SHA-256" },
+    keyPair.publicKey,
+    sig,
+    data
+  );
+
+  if (!isValid) {
+    alert("❌ Signaturprüfung fehlgeschlagen!");
+  } else {
+    console.log("✅ Signatur gültig.");
+  }
+
+  return isValid;
+}
+
+// Hilfsfunktion: base64url → Uint8Array
+function base64urlToBytes(b64url) {
+  const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/") + "==".slice(0, (4 - b64url.length % 4) % 4);
+  const binary = atob(b64);
+  return new Uint8Array([...binary].map(c => c.charCodeAt(0)));
+}
+
+
+const jwk = {
+  kty: "EC",
+  crv: "P-256",
+  x: "....",
+  y: "....",
+  d: "...."  // nur für private key
+};
+
+keyPair = {
+  privateKey: await importPrivateKey(jwk),
+  publicKey: await importPublicKey(jwk)
+};
+
+
+</script>
 </body>
 </html>
 
