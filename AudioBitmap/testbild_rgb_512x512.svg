@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Hintergrund -->
+  <rect x="0" y="0" width="512" height="512" fill="#888" />
+
+  <!-- Farbbalken oben -->
+  <g transform="translate(0,0)">
+    <rect width="73" height="50" x="0" y="0" fill="white"/>
+    <rect width="73" height="50" x="73" y="0" fill="yellow"/>
+    <rect width="73" height="50" x="146" y="0" fill="cyan"/>
+    <rect width="73" height="50" x="219" y="0" fill="green"/>
+    <rect width="73" height="50" x="292" y="0" fill="magenta"/>
+    <rect width="73" height="50" x="365" y="0" fill="red"/>
+    <rect width="74" height="50" x="438" y="0" fill="blue"/>
+  </g>
+
+  <!-- Graustufenbalken unten -->
+  <g transform="translate(0,462)">
+    <rect width="64" height="50" x="0" fill="#000"/>
+    <rect width="64" height="50" x="64" fill="#222"/>
+    <rect width="64" height="50" x="128" fill="#444"/>
+    <rect width="64" height="50" x="192" fill="#666"/>
+    <rect width="64" height="50" x="256" fill="#888"/>
+    <rect width="64" height="50" x="320" fill="#aaa"/>
+    <rect width="64" height="50" x="384" fill="#ccc"/>
+    <rect width="64" height="50" x="448" fill="#fff"/>
+  </g>
+
+  <!-- Mittiges Fadenkreuz -->
+  <line x1="256" y1="0" x2="256" y2="512" stroke="black" stroke-width="1"/>
+  <line x1="0" y1="256" x2="512" y2="256" stroke="black" stroke-width="1"/>
+
+  <!-- Kreis in der Mitte -->
+  <circle cx="256" cy="256" r="100" stroke="black" stroke-width="2" fill="none" />
+
+  <!-- Radiallinien (wie bei TV-Testbild) -->
+  <g stroke="black" stroke-width="1">
+    <line x1="256" y1="256" x2="256" y2="156"/>
+    <line x1="256" y1="256" x2="306" y2="176"/>
+    <line x1="256" y1="256" x2="336" y2="206"/>
+    <line x1="256" y1="256" x2="356" y2="256"/>
+    <line x1="256" y1="256" x2="336" y2="306"/>
+    <line x1="256" y1="256" x2="306" y2="336"/>
+    <line x1="256" y1="256" x2="256" y2="356"/>
+    <line x1="256" y1="256" x2="206" y2="336"/>
+    <line x1="256" y1="256" x2="176" y2="306"/>
+    <line x1="256" y1="256" x2="156" y2="256"/>
+    <line x1="256" y1="256" x2="176" y2="206"/>
+    <line x1="256" y1="256" x2="206" y2="176"/>
+  </g>
+
+  <!-- Schachbrettmuster zentral -->
+  <g transform="translate(180, 180)">
+    <rect width="20" height="20" x="0" y="0" fill="#000"/>
+    <rect width="20" height="20" x="20" y="0" fill="#fff"/>
+    <rect width="20" height="20" x="0" y="20" fill="#fff"/>
+    <rect width="20" height="20" x="20" y="20" fill="#000"/>
+  </g>
+
+  <!-- Textbeschriftung -->
+  <text x="256" y="420" font-size="16" text-anchor="middle" fill="black" font-family="Arial">
+    Testbild - Analoger Übertragungsmodus
+  </text>
+</svg>
+
