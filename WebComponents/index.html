@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>RGBA Canvas Layer Control</title>
+<script type="module" src="./components/rgbacanvas-component.js"></script>
+<style>
+  body { font-family: sans-serif; margin: 1em; }
+  rgba-canvas {
+    display:block;
+    margin-bottom: 1em;
+    border:1px solid #888;
+    width: 256px;
+    height: 256px;
+    background-color: white;
+    background-image: 
+      linear-gradient(45deg, #ccc 25%, transparent 25%),
+      linear-gradient(-45deg, #ccc 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #ccc 75%),
+      linear-gradient(-45deg, transparent 75%, #ccc 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  }
+
+  ul.layer-list {
+    list-style:none;
+    padding:0;
+    margin:0 0 1em 0;
+    width: 200px;
+  }
+  ul.layer-list li {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0.5em;
+    margin:0.2em 0;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+    border-radius:4px;
+    user-select:none;
+  }
+  ul.layer-list li .stift {
+    margin-left:1em;
+    cursor:pointer;
+    font-weight: bold;
+  }
+
+  /* Hintergrundfarben */
+  .layer-visible-r { background-color:#ff0000; }
+  .layer-visible-g { background-color:#00ff00; color:#000; }
+  .layer-visible-b { background-color:#0000ff; }
+  .layer-visible-a { background-color:#000000; }
+  .layer-visible-y { background-color:#ffff00; color:#000; }
+  .layer-visible-c { background-color:#00ffff; color:#000; }
+  .layer-visible-m { background-color:#ff00ff; }
+</style>
+</head>
+<body>
+
+<h1>&lt;rgba-canvas&gt; Layer Control</h1>
+<rgba-canvas id="canvas" width="256" height="256"></rgba-canvas>
+
+<h2>Layer</h2>
+<ul class="layer-list">
+  <li data-channel="r">R <span class="stift">✏</span></li>
+  <li data-channel="y">Y <span class="stift">✏</span></li>
+  <li data-channel="g">G <span class="stift">✏</span></li>
+  <li data-channel="c">C <span class="stift">✏</span></li>
+  <li data-channel="b">B <span class="stift">✏</span></li>
+  <li data-channel="m">M <span class="stift">✏</span></li>
+  <li data-channel="a">A <span class="stift">✏</span></li>
+</ul>
+
+<div style="margin-bottom:1em;">
+  <button id="undoBtn">Undo</button>
+  <button id="redoBtn">Redo</button>
+  <button id="saveBtn">Speichern</button>
+  <input type="file" id="loadInput">
+</div>
+
+<h3>Layer-Daten (0–255)</h3>
+<textarea id="layerData" readonly style="width:100%;height:100px;font-family:monospace;"></textarea>
+
+<script type="module">
+import './components/rgbacanvas-component.js';
+const canvas = document.getElementById('canvas');
+const layerListItems = document.querySelectorAll('.layer-list li');
+const undoBtn = document.getElementById('undoBtn');
+const redoBtn = document.getElementById('redoBtn');
+const saveBtn = document.getElementById('saveBtn');
+const loadInput = document.getElementById('loadInput');
+
+canvas.init({width:256,height:256});
+
+// Mapping Mischfarben → Kanäle
+function getChannels(channel){
+  switch(channel){
+    case 'y': return ['r','g'];
+    case 'c': return ['g','b'];
+    case 'm': return ['r','b'];
+    default: return [channel];
+  }
+}
+
+function updateLayerData(){
+  document.getElementById('layerData').value = canvas.getLayerDataText();
+}
+
+// Update UI: Hintergrund & Stift
+function updateUI(){
+  layerListItems.forEach(li=>{
+    const ch = li.dataset.channel;
+    const channels = getChannels(ch);
+
+    // Sichtbarkeit: alle zugrundeliegenden Kanäle müssen sichtbar sein
+    const visible = channels.every(c => canvas.visible[c]);
+    const active = channels.every(c => canvas.active[c]);
+
+    li.className = '';
+    if(visible){
+      if(ch==='r') li.classList.add('layer-visible-r');
+      else if(ch==='g') li.classList.add('layer-visible-g');
+      else if(ch==='b') li.classList.add('layer-visible-b');
+      else if(ch==='a') li.classList.add('layer-visible-a');
+      else if(ch==='y') li.classList.add('layer-visible-y');
+      else if(ch==='c') li.classList.add('layer-visible-c');
+      else if(ch==='m') li.classList.add('layer-visible-m');
+    }
+
+    // Stift anzeigen oder deaktiviert
+    li.querySelector('.stift').textContent = active ? '✏' : '✎';
+  });
+}
+
+// Initial UI
+updateUI();
+updateLayerData();
+
+// Event-Handling
+layerListItems.forEach(li=>{
+  const ch = li.dataset.channel;
+  const channels = getChannels(ch);
+  const stift = li.querySelector('.stift');
+
+  // Klick auf Zeile toggelt Sichtbarkeit
+  li.addEventListener('click', e=>{
+    if(e.target === stift) return;
+    const allVisible = channels.every(c => canvas.visible[c]);
+    channels.forEach(c => canvas.visible[c] = !allVisible);
+    canvas.render();
+    updateLayerData();
+    updateUI();
+  });
+
+  // Klick auf Stift toggelt Aktivität
+  stift.addEventListener('click', e=>{
+    e.stopPropagation();
+    const allActive = channels.every(c => canvas.active[c]);
+    channels.forEach(c => canvas.active[c] = !allActive);
+    canvas.render();
+    updateLayerData();
+    updateUI();
+  });
+});
+
+// Undo / Redo
+undoBtn.addEventListener('click', ()=>{
+  canvas.undo();
+  updateLayerData();
+  updateUI();
+});
+redoBtn.addEventListener('click', ()=>{
+  canvas.redo();
+  updateLayerData();
+  updateUI();
+});
+
+// Save / Load
+saveBtn.addEventListener('click', ()=>canvas.saveImage());
+
+loadInput.addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(file) canvas.loadImage(file);
+});
+</script>
+
+</body>
+</html>
